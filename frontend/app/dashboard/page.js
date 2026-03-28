@@ -357,7 +357,133 @@ function SearchResults({results, onUnlock, onAddPipeline, onDraftEmail}) {
 }
 
 // ─── Pipeline Board ───────────────────────────────────────────────────────────
-function PipelineBoard({deals, pipeline, onMoveStage, onRefresh}) {
+// ─── Inline Note Panel (used inside deal cards + contact rows) ────────────────
+function InlineNotePanel({dealId, contactId, onClose}) {
+  var [notes, setNotes] = useState([]);
+  var [text, setText] = useState("");
+  var [type, setType] = useState("note");
+  var [saving, setSaving] = useState(false);
+  var NOTE_ICONS = {note:"📝",call:"📞",email:"✉️",meeting:"🤝",task:"✅"};
+  var NOTE_COLORS = {note:"#4F8EF7",call:"#00D97E",email:"#A855F7",meeting:"#FF8C42",task:"#00D4AA"};
+
+  useEffect(function(){
+    var path = dealId ? "/notes/deal/"+dealId : "/notes/contact/"+contactId;
+    apiFetch(path).then(function(r){ setNotes(r.notes||[]); });
+  }, [dealId, contactId]);
+
+  async function submit() {
+    if (!text.trim()) return;
+    setSaving(true);
+    var body = {content:text, note_type:type};
+    if (dealId) body.deal_id = dealId; else body.saved_lead_id = contactId;
+    var r = await apiFetch("/notes/", {method:"POST", body:JSON.stringify(body)}).catch(()=>({}));
+    if (r.success) {
+      setNotes(function(prev){ return [r.note, ...prev]; });
+      setText("");
+    }
+    setSaving(false);
+  }
+
+  return (
+    <div style={{background:"#070910",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:12,marginTop:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{fontSize:10,fontWeight:700,color:"rgba(226,232,240,0.5)",letterSpacing:0.8}}>ACTIVITY LOG</span>
+        <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"rgba(226,232,240,0.3)",fontSize:14,padding:0}}>✕</button>
+      </div>
+      <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
+        {Object.entries(NOTE_ICONS).map(function([k,v]){
+          return <button key={k} onClick={function(){setType(k)}} style={{
+            padding:"3px 8px",borderRadius:12,border:"none",cursor:"pointer",fontSize:10,fontWeight:600,
+            background: type===k ? NOTE_COLORS[k] : "rgba(255,255,255,0.05)",
+            color: type===k ? "#fff" : "rgba(226,232,240,0.4)"}}>
+            {v} {k}
+          </button>;
+        })}
+      </div>
+      <div style={{display:"flex",gap:6}}>
+        <input value={text} onChange={function(e){setText(e.target.value)}}
+          onKeyDown={function(e){if(e.key==="Enter") submit();}}
+          placeholder="Log a note and press Enter..."
+          style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+            borderRadius:6,padding:"6px 10px",color:"#E2E8F0",fontSize:12,outline:"none"}}/>
+        <button onClick={submit} disabled={saving||!text.trim()} style={{
+          padding:"6px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,
+          background: saving?"rgba(79,142,247,0.3)":"#4F8EF7",color:"#fff"}}>
+          {saving?"...":"Log"}
+        </button>
+      </div>
+      <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:4,maxHeight:120,overflow:"auto"}}>
+        {notes.length===0
+          ? <div style={{fontSize:11,color:"rgba(226,232,240,0.25)",textAlign:"center",padding:"8px 0"}}>No notes yet</div>
+          : notes.map(function(n){
+            var ic = NOTE_ICONS[n.note_type]||"📝";
+            var cl = NOTE_COLORS[n.note_type]||"#4F8EF7";
+            return <div key={n.id} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+              <span style={{fontSize:12,marginTop:1}}>{ic}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:"rgba(226,232,240,0.8)",lineHeight:1.4}}>{n.content}</div>
+                <div style={{fontSize:9,color:"rgba(226,232,240,0.25)",marginTop:2}}>
+                  {new Date(n.created_at).toLocaleString()}
+                </div>
+              </div>
+            </div>;
+          })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Pipeline Board ────────────────────────────────────────────────────────────
+function DealCard({deal, stages, onMoveStage, onDelete}) {
+  var [showNotes, setShowNotes] = useState(false);
+  var color = STAGE_COLORS[deal.stage];
+  return (
+    <div style={{background:T.surface,borderRadius:"0 0 8px 8px",
+      border:"1px solid "+T.border,borderTop:"none",padding:12}}>
+      <div style={{fontSize:12,fontWeight:600,color:T.textPrimary,marginBottom:4,lineHeight:1.3}}>{deal.title}</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+        <span style={{fontSize:11,fontWeight:700,color:T.teal,fontFamily:"monospace"}}>
+          ${(deal.value/1000).toFixed(0)}K
+        </span>
+        <CompliancePill status={deal.compliance_status}/>
+      </div>
+      {deal.notes && (
+        <div style={{fontSize:10,color:T.textMuted,marginBottom:6,padding:"4px 6px",
+          background:"rgba(255,255,255,0.03)",borderRadius:4,lineHeight:1.4,
+          borderLeft:"2px solid rgba(255,255,255,0.1)"}}>
+          {deal.notes.split("\n").pop().slice(0,60)}{deal.notes.length>60?"…":""}
+        </div>
+      )}
+      <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:6}}>
+        {stages.filter(function(s){return s!==deal.stage && s!=="lost"}).slice(0,3).map(function(s){
+          return (
+            <button key={s} onClick={function(){onMoveStage(deal.id,s)}} style={{
+              padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
+              fontSize:8,fontWeight:600,background:STAGE_COLORS[s]+"15",
+              color:STAGE_COLORS[s],textTransform:"capitalize"}}>
+              → {s}
+            </button>
+          );
+        })}
+        <button onClick={function(){setShowNotes(function(v){return !v;})}} style={{
+          padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
+          fontSize:8,fontWeight:600,
+          background: showNotes?"rgba(79,142,247,0.2)":"rgba(255,255,255,0.06)",
+          color: showNotes?"#4F8EF7":"rgba(226,232,240,0.4)"}}>
+          📝 Notes
+        </button>
+        <button onClick={function(){onDelete(deal.id)}} style={{
+          padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
+          fontSize:8,fontWeight:600,background:"rgba(255,59,92,0.1)",color:"#FF3B5C",marginLeft:"auto"}}>
+          ✕
+        </button>
+      </div>
+      {showNotes && <InlineNotePanel dealId={deal.id} onClose={function(){setShowNotes(false)}}/>}
+    </div>
+  );
+}
+
+function PipelineBoard({deals, pipeline, onMoveStage, onRefresh, onDeleteDeal}) {
   var stages = ["lead","qualified","proposal","negotiation","won","lost"];
 
   return (
@@ -372,8 +498,7 @@ function PipelineBoard({deals, pipeline, onMoveStage, onRefresh}) {
           var p = pipeline[stage] || {count:0, value:0};
           var stageDeals = deals.filter(function(d){return d.stage===stage});
           return (
-            <div key={stage} style={{width:220,flexShrink:0}}>
-              {/* Column header */}
+            <div key={stage} style={{width:240,flexShrink:0}}>
               <div style={{background:T.surface,borderRadius:"10px 10px 0 0",
                 border:"1px solid "+T.border,borderBottom:"2px solid "+color,
                 padding:"10px 12px",marginBottom:4}}>
@@ -388,35 +513,10 @@ function PipelineBoard({deals, pipeline, onMoveStage, onRefresh}) {
                   ${(p.value/1000).toFixed(0)}K pipeline
                 </div>
               </div>
-
-              {/* Deal cards */}
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {stageDeals.map(function(deal) {
-                  return (
-                    <div key={deal.id} style={{background:T.surface,borderRadius:"0 0 8px 8px",
-                      border:"1px solid "+T.border,borderTop:"none",padding:12}}>
-                      <div style={{fontSize:12,fontWeight:600,color:T.textPrimary,marginBottom:6,
-                        lineHeight:1.3}}>{deal.title}</div>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                        <span style={{fontSize:11,fontWeight:700,color:T.teal,fontFamily:"monospace"}}>
-                          ${(deal.value/1000).toFixed(0)}K
-                        </span>
-                        <CompliancePill status={deal.compliance_status}/>
-                      </div>
-                      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
-                        {stages.filter(function(s){return s!==stage && s!=="lost"}).slice(0,3).map(function(s){
-                          return (
-                            <button key={s} onClick={function(){onMoveStage(deal.id,s)}} style={{
-                              padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
-                              fontSize:8,fontWeight:600,background:STAGE_COLORS[s]+"15",
-                              color:STAGE_COLORS[s],textTransform:"capitalize"}}>
-                              → {s}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
+                  return <DealCard key={deal.id} deal={deal} stages={stages}
+                    onMoveStage={onMoveStage} onDelete={onDeleteDeal}/>;
                 })}
                 {stageDeals.length===0 && (
                   <div style={{padding:"20px 12px",textAlign:"center",color:T.textFaint,fontSize:11,
@@ -434,6 +534,75 @@ function PipelineBoard({deals, pipeline, onMoveStage, onRefresh}) {
 }
 
 // ─── Contacts Book ────────────────────────────────────────────────────────────
+var STATUS_COLORS = {discovered:"#4F8EF7",contacted:"#A855F7",meeting:"#FF8C42",won:"#00D97E",lost:"#FF3B5C"};
+var STATUSES = ["discovered","contacted","meeting","won","lost"];
+
+function ContactRow({c, idx, onStatusChange}) {
+  var [open, setOpen] = useState(false);
+  var [status, setStatus] = useState(c.status);
+  var [updating, setUpdating] = useState(false);
+
+  async function changeStatus(s) {
+    setUpdating(true);
+    await apiFetch("/search/contacts/"+c.id, {method:"PATCH",
+      body:JSON.stringify({status:s})}).catch(()=>{});
+    setStatus(s);
+    onStatusChange(c.id, s);
+    setUpdating(false);
+  }
+
+  var rowBg = idx%2===0 ? "transparent" : "rgba(15,17,32,0.6)";
+  return (
+    <>
+      <tr style={{borderBottom:"1px solid rgba(255,255,255,0.04)",background:rowBg,
+        cursor:"pointer",transition:"background 0.15s"}}
+        onMouseEnter={function(e){e.currentTarget.style.background="rgba(20,23,40,0.9)"}}
+        onMouseLeave={function(e){e.currentTarget.style.background=rowBg}}>
+        <td style={{padding:"10px 12px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <Avatar name={c.name} size={26}/>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#E2E8F0"}}>{c.name}</div>
+              <div style={{fontSize:10,color:"rgba(226,232,240,0.35)"}}>{c.country}</div>
+            </div>
+          </div>
+        </td>
+        <td style={{padding:"10px 12px",fontSize:12,color:"#E2E8F0"}}>{c.company}</td>
+        <td style={{padding:"10px 12px",fontSize:11,color:"rgba(226,232,240,0.5)",whiteSpace:"nowrap"}}>{c.title}</td>
+        <td style={{padding:"10px 12px",fontSize:11,color:"rgba(226,232,240,0.5)",fontFamily:"monospace"}}>{c.email}</td>
+        <td style={{padding:"10px 12px"}}><ScorePill score={c.lead_score||0}/></td>
+        <td style={{padding:"10px 12px"}}>
+          <select value={status} onChange={function(e){changeStatus(e.target.value)}}
+            disabled={updating}
+            style={{background:STATUS_COLORS[status]+"18",border:"1px solid "+STATUS_COLORS[status]+"40",
+              borderRadius:6,padding:"3px 6px",color:STATUS_COLORS[status],fontSize:11,fontWeight:600,
+              outline:"none",cursor:"pointer"}}>
+            {STATUSES.map(function(s){return <option key={s} value={s}>{s}</option>;})}
+          </select>
+        </td>
+        <td style={{padding:"10px 12px",fontSize:11,fontWeight:700,color:"#00D4AA",fontFamily:"monospace"}}>
+          {c.deal_value > 0 ? "$"+(c.deal_value/1000).toFixed(0)+"K" : "—"}
+        </td>
+        <td style={{padding:"10px 12px"}}>
+          <button onClick={function(){setOpen(function(v){return !v;})}} style={{
+            padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontWeight:600,
+            background: open?"rgba(79,142,247,0.2)":"rgba(255,255,255,0.06)",
+            color: open?"#4F8EF7":"rgba(226,232,240,0.4)"}}>
+            📝 {open?"Close":"Notes"}
+          </button>
+        </td>
+      </tr>
+      {open && (
+        <tr style={{background:"#07090F"}}>
+          <td colSpan={8} style={{padding:"0 12px 12px 52px"}}>
+            <InlineNotePanel contactId={c.id} onClose={function(){setOpen(false)}}/>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 function ContactsBook() {
   var [contacts, setContacts] = useState([]);
   var [q, setQ] = useState("");
@@ -446,97 +615,75 @@ function ContactsBook() {
     });
   }, []);
 
+  function handleStatusChange(id, newStatus) {
+    setContacts(function(prev){ return prev.map(function(c){ return c.id===id ? {...c, status:newStatus} : c; }); });
+  }
+
   var filtered = useMemo(function(){
     return contacts.filter(function(c){
       if(statusFilter && c.status !== statusFilter) return false;
       if(q){
-        var h = (c.name+" "+c.company+" "+c.title+" "+c.email).toLowerCase();
+        var h = (c.name+" "+c.company+" "+c.title+" "+(c.email||"")).toLowerCase();
         if(!h.includes(q.toLowerCase())) return false;
       }
       return true;
     });
   }, [contacts, q, statusFilter]);
 
-  var STATUS_COLORS = {discovered:T.blue,contacted:T.purple,meeting:T.orange,won:T.green,lost:T.red};
-  var thStyle = {padding:"8px 12px",fontSize:10,fontWeight:700,color:T.textMuted,
+  var thStyle = {padding:"8px 12px",fontSize:10,fontWeight:700,color:"rgba(226,232,240,0.4)",
     textTransform:"uppercase",letterSpacing:0.8,textAlign:"left",
-    borderBottom:"1px solid "+T.border,whiteSpace:"nowrap"};
+    borderBottom:"1px solid rgba(255,255,255,0.06)",whiteSpace:"nowrap"};
 
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      {/* Toolbar */}
-      <div style={{padding:"12px 16px",borderBottom:"1px solid "+T.border,display:"flex",gap:8,alignItems:"center"}}>
+      <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center"}}>
         <input value={q} onChange={function(e){setQ(e.target.value)}} placeholder="Search contacts..."
-          style={{flex:1,maxWidth:280,background:T.surface,border:"1px solid "+T.border,borderRadius:7,
-            padding:"7px 12px",color:T.textPrimary,fontSize:12,outline:"none"}}/>
+          style={{flex:1,maxWidth:280,background:"#0F1120",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,
+            padding:"7px 12px",color:"#E2E8F0",fontSize:12,outline:"none"}}/>
         <select value={statusFilter} onChange={function(e){setStatusFilter(e.target.value)}}
-          style={{background:T.surface,border:"1px solid "+T.border,borderRadius:7,padding:"7px 10px",
-            color:T.textPrimary,fontSize:12,outline:"none"}}>
+          style={{background:"#0F1120",border:"1px solid rgba(255,255,255,0.08)",borderRadius:7,padding:"7px 10px",
+            color:"#E2E8F0",fontSize:12,outline:"none"}}>
           <option value="">All Statuses</option>
-          {["discovered","contacted","meeting","won","lost"].map(function(s){
+          {STATUSES.map(function(s){
             return <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>;
           })}
         </select>
-        <span style={{fontSize:12,color:T.textMuted,marginLeft:"auto"}}>
-          <span style={{color:T.textPrimary,fontWeight:700}}>{filtered.length}</span> contacts
+        <span style={{fontSize:12,color:"rgba(226,232,240,0.5)",marginLeft:"auto"}}>
+          <span style={{color:"#E2E8F0",fontWeight:700}}>{filtered.length}</span> contacts
         </span>
         <a href={API_BASE+"/api/search/export-csv"} style={{
           padding:"6px 12px",borderRadius:7,fontSize:11,fontWeight:600,
-          background:T.purple+"15",color:T.purple,textDecoration:"none"}}>
+          background:"rgba(168,85,247,0.15)",color:"#A855F7",textDecoration:"none"}}>
           Export CSV
         </a>
       </div>
 
-      {/* Table */}
       <div style={{flex:1,overflow:"auto"}}>
         {loading ? (
-          <div style={{padding:40,textAlign:"center",color:T.textFaint,fontSize:13}}>Loading contacts...</div>
+          <div style={{padding:40,textAlign:"center",color:"rgba(226,232,240,0.2)",fontSize:13}}>Loading contacts...</div>
         ) : filtered.length === 0 ? (
-          <div style={{padding:60,textAlign:"center",color:T.textFaint}}>
+          <div style={{padding:60,textAlign:"center",color:"rgba(226,232,240,0.2)"}}>
             <div style={{fontSize:36,marginBottom:12,opacity:0.3}}>👥</div>
             <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>No contacts yet</div>
-            <div style={{fontSize:12}}>Unlock leads from Search to build your contact book</div>
+            <div style={{fontSize:12}}>Unlock leads from Discover or Search to build your contact book</div>
           </div>
         ) : (
           <table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead>
-              <tr style={{background:T.surface}}>
+              <tr style={{background:"#0B0D17"}}>
                 <th style={thStyle}>Contact</th>
                 <th style={thStyle}>Company</th>
                 <th style={thStyle}>Title</th>
                 <th style={thStyle}>Email</th>
                 <th style={thStyle}>Score</th>
-                <th style={thStyle}>Country</th>
                 <th style={thStyle}>Status</th>
                 <th style={thStyle}>Value</th>
+                <th style={thStyle}>Notes</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(function(c, i) {
-                return (
-                  <tr key={c.id} style={{borderBottom:"1px solid "+T.border,
-                    background: i%2===0 ? "transparent" : T.surface+"60"}}
-                    onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceHover}}
-                    onMouseLeave={function(e){e.currentTarget.style.background= i%2===0 ? "transparent" : T.surface+"60"}}>
-                    <td style={{padding:"10px 12px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <Avatar name={c.name} size={26}/>
-                        <span style={{fontSize:12,fontWeight:600,color:T.textPrimary}}>{c.name}</span>
-                      </div>
-                    </td>
-                    <td style={{padding:"10px 12px",fontSize:12,color:T.textPrimary}}>{c.company}</td>
-                    <td style={{padding:"10px 12px",fontSize:11,color:T.textMuted,whiteSpace:"nowrap"}}>{c.title}</td>
-                    <td style={{padding:"10px 12px",fontSize:11,color:T.textMuted,fontFamily:"monospace"}}>{c.email}</td>
-                    <td style={{padding:"10px 12px"}}><ScorePill score={c.lead_score||0}/></td>
-                    <td style={{padding:"10px 12px",fontSize:11,color:T.textMuted}}>{c.country}</td>
-                    <td style={{padding:"10px 12px"}}>
-                      <Pill label={c.status} color={STATUS_COLORS[c.status]||T.textFaint}/>
-                    </td>
-                    <td style={{padding:"10px 12px",fontSize:11,fontWeight:700,color:T.teal,fontFamily:"monospace"}}>
-                      {c.deal_value > 0 ? "$"+(c.deal_value/1000).toFixed(0)+"K" : "—"}
-                    </td>
-                  </tr>
-                );
+                return <ContactRow key={c.id} c={c} idx={i} onStatusChange={handleStatusChange}/>;
               })}
             </tbody>
           </table>
@@ -1075,6 +1222,10 @@ export default function Dashboard() {
     api("/deals/"+dealId,{method:"PATCH",body:JSON.stringify({stage})}).then(loadData);
   }
 
+  function handleDeleteDeal(dealId) {
+    api("/deals/"+dealId,{method:"DELETE"}).then(loadData);
+  }
+
   // ── Layout ──────────────────────────────────────────────────────────────────
   return (
     <div style={{minHeight:"100vh",background:T.bg,color:T.textPrimary,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",display:"flex",flexDirection:"column"}}>
@@ -1213,6 +1364,7 @@ export default function Dashboard() {
             <PipelineBoard
               deals={deals} pipeline={pipeline}
               onMoveStage={handleMoveStage} onRefresh={loadData}
+              onDeleteDeal={handleDeleteDeal}
             />
           )}
 
