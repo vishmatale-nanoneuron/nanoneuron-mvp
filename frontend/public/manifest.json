@@ -1,13 +1,17 @@
 {
-  "name": "Nanoneuron CRM",
+  "name": "Nanoneuron — Lead Discovery Engine",
   "short_name": "Nanoneuron",
-  "description": "Find leads. Track deals. Stay compliant. — 50+ countries.",
+  "description": "Best MVP Lead Discovery Engine — 188 companies · 50+ countries · AI scoring · Cold email writer. Find B2B leads with live intent signals.",
   "start_url": "/dashboard/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#07090F",
   "theme_color": "#4F8EF7",
-  "categories": ["business", "productivity"],
+  "categories": ["business", "productivity", "finance"],
+  "lang": "en",
+  "dir": "ltr",
+  "iarc_rating_id": "",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -37,14 +41,35 @@
   "shortcuts": [
     {
       "name": "Discover Leads",
+      "short_name": "Discover",
+      "description": "Find B2B leads in 50+ countries",
       "url": "/dashboard/#discover",
-      "description": "Find new leads globally"
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Pipeline",
+      "short_name": "Pipeline",
+      "description": "View your deal pipeline",
       "url": "/dashboard/#pipeline",
-      "description": "View your deal pipeline"
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Hot Leads",
+      "short_name": "Hot Leads",
+      "description": "View top-scored leads right now",
+      "url": "/dashboard/?min_score=80",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "screenshots": []
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Lead Discovery Engine — Global B2B Intelligence"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
