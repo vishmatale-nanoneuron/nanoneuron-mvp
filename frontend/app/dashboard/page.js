@@ -35,6 +35,7 @@ var NAV = [
   {id:"contacts",  icon:"👥", label:"Contacts"},
   {id:"pipeline",  icon:"📋", label:"Pipeline"},
   {id:"aihub",     icon:"⚡", label:"AI Hub"},
+  {id:"notes",     icon:"📝", label:"Notes & Activity"},
   {id:"email",     icon:"✉", label:"AI Email"},
   {id:"earnings",  icon:"₹",  label:"Earnings"},
   {id:"payment",   icon:"💳", label:"Billing"},
@@ -812,6 +813,192 @@ function PaymentView() {
   );
 }
 
+// ─── NOTES & ACTIVITY VIEW ────────────────────────────────────────────────────
+var NOTE_TYPES = [
+  {id:"note",icon:"📝",label:"Note",color:"#4F8EF7"},
+  {id:"call",icon:"📞",label:"Call",color:"#00D97E"},
+  {id:"email",icon:"✉️",label:"Email",color:"#A855F7"},
+  {id:"meeting",icon:"🤝",label:"Meeting",color:"#FF8C42"},
+  {id:"task",icon:"✅",label:"Task",color:"#00D4AA"},
+];
+
+function NotesActivityView() {
+  var [activity, setActivity] = useState([]);
+  var [loading, setLoading] = useState(true);
+  var [noteText, setNoteText] = useState("");
+  var [noteType, setNoteType] = useState("note");
+  var [saving, setSaving] = useState(false);
+  var [templates, setTemplates] = useState([]);
+  var [tmplName, setTmplName] = useState("");
+  var [tmplSubject, setTmplSubject] = useState("");
+  var [tmplBody, setTmplBody] = useState("");
+  var [savingTmpl, setSavingTmpl] = useState(false);
+  var [tab, setTab] = useState("activity");
+
+  useEffect(() => {
+    loadActivity();
+    loadTemplates();
+  }, []);
+
+  async function loadActivity() {
+    setLoading(true);
+    var r = await apiFetch("/notes/recent").catch(() => ({}));
+    setActivity(r.activity || []);
+    setLoading(false);
+  }
+
+  async function loadTemplates() {
+    var r = await apiFetch("/templates/").catch(() => ({}));
+    setTemplates(r.templates || []);
+  }
+
+  async function submitNote() {
+    if (!noteText.trim()) return;
+    setSaving(true);
+    // Create a note without deal/contact (global activity note hack: use a placeholder saved_lead_id)
+    await apiFetch("/notes/", { method:"POST", body: JSON.stringify({
+      content: noteText, note_type: noteType, saved_lead_id: "00000000-0000-0000-0000-000000000000"
+    })}).catch(() => {});
+    setNoteText("");
+    setSaving(false);
+    loadActivity();
+  }
+
+  async function saveTmpl() {
+    if (!tmplName || !tmplSubject || !tmplBody) return;
+    setSavingTmpl(true);
+    await apiFetch("/templates/", { method:"POST", body: JSON.stringify({
+      name: tmplName, subject: tmplSubject, body: tmplBody, language: "en"
+    })}).catch(() => {});
+    setTmplName(""); setTmplSubject(""); setTmplBody("");
+    setSavingTmpl(false);
+    loadTemplates();
+  }
+
+  async function deleteTmpl(id) {
+    await apiFetch("/templates/" + id, { method:"DELETE" }).catch(() => {});
+    loadTemplates();
+  }
+
+  var typeInfo = (t) => NOTE_TYPES.find(n => n.id === t) || NOTE_TYPES[0];
+
+  return (
+    <div style={{padding:24, maxWidth:900, margin:"0 auto"}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:22, fontWeight:700, color:"#E2E8F0", marginBottom:4}}>Notes & Activity</div>
+        <div style={{fontSize:13, color:"rgba(226,232,240,0.5)"}}>Log calls, meetings, emails · Save email templates</div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex", gap:8, marginBottom:24}}>
+        {[{id:"activity",label:"📋 Activity Feed"},{id:"templates",label:"✉️ Email Templates"}].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            padding:"8px 18px", borderRadius:8, border:"none", cursor:"pointer", fontSize:13, fontWeight:600,
+            background: tab===t.id ? "#4F8EF7" : "rgba(255,255,255,0.05)",
+            color: tab===t.id ? "#fff" : "rgba(226,232,240,0.6)"
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab === "activity" && (
+        <div>
+          {/* Quick note */}
+          <div style={{background:"#0F1120", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, padding:20, marginBottom:24}}>
+            <div style={{fontSize:13, fontWeight:600, color:"rgba(226,232,240,0.7)", marginBottom:12}}>Log Activity</div>
+            <div style={{display:"flex", gap:8, marginBottom:12, flexWrap:"wrap"}}>
+              {NOTE_TYPES.map(nt => (
+                <button key={nt.id} onClick={() => setNoteType(nt.id)} style={{
+                  padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontSize:11, fontWeight:600,
+                  background: noteType===nt.id ? nt.color : "rgba(255,255,255,0.05)",
+                  color: noteType===nt.id ? "#fff" : "rgba(226,232,240,0.5)"
+                }}>{nt.icon} {nt.label}</button>
+              ))}
+            </div>
+            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add a note..." rows={3}
+              style={{width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:8, padding:10, color:"#E2E8F0", fontSize:13, resize:"vertical", outline:"none", boxSizing:"border-box"}}/>
+            <button onClick={submitNote} disabled={saving || !noteText.trim()} style={{
+              marginTop:10, padding:"8px 20px", borderRadius:8, border:"none", cursor:"pointer",
+              background: saving ? "rgba(79,142,247,0.4)" : "#4F8EF7", color:"#fff", fontWeight:600, fontSize:13
+            }}>{saving ? "Saving..." : "Log Note"}</button>
+          </div>
+
+          {/* Activity feed */}
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {loading ? (
+              <div style={{color:"rgba(226,232,240,0.4)", fontSize:13, textAlign:"center", padding:40}}>Loading activity...</div>
+            ) : activity.length === 0 ? (
+              <div style={{color:"rgba(226,232,240,0.4)", fontSize:13, textAlign:"center", padding:40}}>No activity yet. Log your first note above.</div>
+            ) : activity.map(n => {
+              var ti = typeInfo(n.note_type);
+              return (
+                <div key={n.id} style={{background:"#0F1120", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 18px", display:"flex", gap:14, alignItems:"flex-start"}}>
+                  <div style={{width:32, height:32, borderRadius:8, background:ti.color+"18", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0}}>{ti.icon}</div>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:4}}>
+                      <span style={{fontSize:11, fontWeight:700, color:ti.color, background:ti.color+"18", padding:"2px 8px", borderRadius:10}}>{ti.label}</span>
+                      <span style={{fontSize:11, color:"rgba(226,232,240,0.35)"}}>{new Date(n.created_at).toLocaleString()}</span>
+                    </div>
+                    <div style={{fontSize:13, color:"rgba(226,232,240,0.85)", lineHeight:1.5}}>{n.content}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {tab === "templates" && (
+        <div>
+          {/* Create template */}
+          <div style={{background:"#0F1120", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, padding:20, marginBottom:24}}>
+            <div style={{fontSize:13, fontWeight:600, color:"rgba(226,232,240,0.7)", marginBottom:12}}>New Email Template</div>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12}}>
+              <input value={tmplName} onChange={e => setTmplName(e.target.value)} placeholder="Template name" style={{
+                background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8,
+                padding:"9px 12px", color:"#E2E8F0", fontSize:13, outline:"none"}}/>
+              <input value={tmplSubject} onChange={e => setTmplSubject(e.target.value)} placeholder="Email subject" style={{
+                background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8,
+                padding:"9px 12px", color:"#E2E8F0", fontSize:13, outline:"none"}}/>
+            </div>
+            <textarea value={tmplBody} onChange={e => setTmplBody(e.target.value)} placeholder="Email body..." rows={4}
+              style={{width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:8, padding:10, color:"#E2E8F0", fontSize:13, resize:"vertical", outline:"none", boxSizing:"border-box"}}/>
+            <button onClick={saveTmpl} disabled={savingTmpl || !tmplName || !tmplSubject || !tmplBody} style={{
+              marginTop:10, padding:"8px 20px", borderRadius:8, border:"none", cursor:"pointer",
+              background: savingTmpl ? "rgba(168,85,247,0.4)" : "#A855F7", color:"#fff", fontWeight:600, fontSize:13
+            }}>{savingTmpl ? "Saving..." : "Save Template"}</button>
+          </div>
+
+          {/* Templates list */}
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {templates.length === 0 ? (
+              <div style={{color:"rgba(226,232,240,0.4)", fontSize:13, textAlign:"center", padding:40}}>No templates yet. Create one above.</div>
+            ) : templates.map(t => (
+              <div key={t.id} style={{background:"#0F1120", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 18px"}}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8}}>
+                  <div>
+                    <div style={{fontSize:14, fontWeight:600, color:"#E2E8F0", marginBottom:2}}>{t.name}</div>
+                    <div style={{fontSize:12, color:"#A855F7"}}>Subject: {t.subject}</div>
+                  </div>
+                  <div style={{display:"flex", gap:8, alignItems:"center"}}>
+                    <span style={{fontSize:11, color:"rgba(226,232,240,0.4)"}}>Used {t.use_count}x</span>
+                    <button onClick={() => deleteTmpl(t.id)} style={{
+                      padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer",
+                      background:"rgba(255,59,92,0.15)", color:"#FF3B5C", fontSize:11, fontWeight:600
+                    }}>Delete</button>
+                  </div>
+                </div>
+                <div style={{fontSize:12, color:"rgba(226,232,240,0.5)", lineHeight:1.5, whiteSpace:"pre-wrap"}}>{t.body}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 export default function Dashboard() {
   var [tab, setTab] = useState("dashboard");
@@ -1033,6 +1220,9 @@ export default function Dashboard() {
 
           {/* AI Hub */}
           {tab==="aihub" && <AIHub/>}
+
+          {/* Notes & Activity */}
+          {tab==="notes" && <NotesActivityView/>}
 
           {/* AI Email */}
           {tab==="email" && (

@@ -10,31 +10,32 @@ var T = {
 };
 
 var STATS = [
-  {n:"200+",l:"Verified Contacts"},
+  {n:"300+",l:"Verified Contacts"},
   {n:"10",l:"Industries"},
-  {n:"15",l:"Countries"},
-  {n:"6",l:"Compliance Laws"},
+  {n:"50+",l:"Countries"},
+  {n:"20+",l:"Compliance Laws"},
 ];
 
 var FEATURES = [
-  {icon:"🔍", title:"B2B Lead Intelligence",
-   desc:"Search 200+ verified contacts across SaaS, Fintech, Healthcare, Legal, Manufacturing, Logistics, Cybersecurity and more."},
-  {icon:"🤖", title:"AI-Powered Outreach",
-   desc:"Claude AI drafts personalized outreach emails in English, Japanese, German, and Hindi — tailored to every contact."},
-  {icon:"📊", title:"Lead Scoring Engine",
-   desc:"Every contact scored 0–100. CEOs and CXOs score highest. Focus your credits on HOT leads, skip cold ones."},
+  {icon:"🌍", title:"Global Lead Discovery Engine",
+   desc:"120+ companies · 300+ decision-makers · 50+ countries · 10 industries. Filter by intent signals, funding stage, tech stack, seniority and department. ZoomInfo-level intelligence, fraction of the cost.",
+   highlight:true},
+  {icon:"🎯", title:"Real Intent Signals",
+   desc:"Know who's ready to buy: Series B funded, Cloud migration, CISO hired, Digital transformation, Compliance audit, Expanding globally — 15 live intent signals per company."},
+  {icon:"📊", title:"AI Lead Scoring",
+   desc:"Every contact scored 0–99 based on seniority, company size, revenue, intent signals, and department. Focus on HOT leads (80+), skip cold ones."},
+  {icon:"🤖", title:"Claude AI Outreach",
+   desc:"AI drafts personalized emails for every contact — tailored to their country culture, compliance rules, and intent signals. 10+ languages."},
   {icon:"🛡️", title:"Auto Compliance",
-   desc:"GDPR, UK GDPR, CCPA, DPDPA, LGPD, APPI — compliance status checked and displayed automatically per country."},
+   desc:"GDPR, UK GDPR, CCPA, DPDPA, LGPD, APPI, PDPA, POPIA, KVKK — 20+ compliance laws checked automatically per country."},
+  {icon:"🏢", title:"Company Intelligence",
+   desc:"Tech stack, funding history, growth %, employee range, revenue band, business culture tips, and compliance status — all in one card."},
   {icon:"📋", title:"Deal Pipeline",
    desc:"6-stage pipeline: Lead → Qualified → Proposal → Negotiation → Won → Lost. Track every deal from first touch to close."},
-  {icon:"👥", title:"Contact Book",
-   desc:"Every unlocked contact saved automatically. Search, filter, update status, track last contacted date."},
-  {icon:"💰", title:"Credit System",
-   desc:"7-day free trial with 10 credits. 1 credit unlocks a full verified email + phone. Pay only for what you use."},
-  {icon:"🌏", title:"Global Coverage",
-   desc:"US, India, UK, Germany, Australia, Canada, France, Singapore, UAE, Japan, Brazil, Israel and more."},
+  {icon:"📝", title:"Notes & Activity",
+   desc:"Log calls, meetings, emails, tasks on every deal and contact. Full activity feed. Save and reuse email templates."},
   {icon:"📤", title:"CSV Export",
-   desc:"Export your entire contact book with one click — ready for CRM import, email campaigns, or resale."},
+   desc:"Export your entire contact book with one click — ready for Salesforce, HubSpot, or any email tool."},
 ];
 
 var PLANS = [
@@ -86,24 +87,27 @@ export default function Home() {
       {/* ── Hero ── */}
       <section style={{padding:"80px 32px 72px",maxWidth:1000,margin:"0 auto",textAlign:"center"}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",
-          borderRadius:20,border:"1px solid "+T.blue+"30",background:T.blue+"10",
-          fontSize:11,color:T.blue,fontWeight:600,marginBottom:28}}>
-          <span style={{width:6,height:6,borderRadius:"50%",background:T.blue,animation:"pulse 2s infinite"}}/>
-          7-day free trial · No credit card required
+          borderRadius:20,border:"1px solid "+T.teal+"30",background:T.teal+"10",
+          fontSize:11,color:T.teal,fontWeight:700,marginBottom:16,letterSpacing:0.5}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:T.teal}}/>
+          🌍 GLOBAL LEAD DISCOVERY ENGINE · 50+ Countries · 120+ Companies
         </div>
 
-        <h1 style={{fontSize:"clamp(32px,5.5vw,54px)",fontWeight:800,lineHeight:1.1,
-          letterSpacing:-1,marginBottom:20}}>
-          The B2B Intelligence Platform<br/>
-          <span style={{background:`linear-gradient(135deg,${T.blue},${T.purple})`,
+        <h1 style={{fontSize:"clamp(34px,5.5vw,58px)",fontWeight:900,lineHeight:1.08,
+          letterSpacing:-1.5,marginBottom:20}}>
+          Find Your Next Customer<br/>
+          <span style={{background:`linear-gradient(135deg,${T.blue} 0%,${T.teal} 50%,${T.purple} 100%)`,
             WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
-            Built for Global Sales Teams
+            Anywhere on Earth
           </span>
         </h1>
 
-        <p style={{fontSize:17,color:T.muted,maxWidth:560,margin:"0 auto 36px",lineHeight:1.7}}>
-          Discover verified decision-makers in 15 countries. AI-powered outreach. Auto-compliance
-          for GDPR, CCPA, LGPD & more. Start closing international deals today.
+        <p style={{fontSize:17,color:T.muted,maxWidth:600,margin:"0 auto 12px",lineHeight:1.7}}>
+          The world's smartest B2B lead discovery engine. 300+ decision-makers across 50+ countries,
+          10 industries, real intent signals, AI-scored and compliance-checked automatically.
+        </p>
+        <p style={{fontSize:14,color:T.muted,maxWidth:540,margin:"0 auto 36px",lineHeight:1.6,opacity:0.7}}>
+          Intent signals · Tech stack data · Funding stage · Seniority scoring · GDPR/CCPA/LGPD auto-compliance
         </p>
 
         <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:52}}>
@@ -220,16 +224,58 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Global Discovery Hero Feature ── */}
+      <section style={{padding:"60px 32px 0",maxWidth:1100,margin:"0 auto"}}>
+        <div style={{background:"linear-gradient(135deg,#0B1629 0%,#0D1220 50%,#0B1629 100%)",
+          border:"1px solid "+T.teal+"30",borderRadius:16,padding:"40px 48px",marginBottom:20,
+          position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:-60,right:-60,width:300,height:300,borderRadius:"50%",
+            background:T.teal+"08",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",bottom:-80,left:-40,width:250,height:250,borderRadius:"50%",
+            background:T.blue+"08",pointerEvents:"none"}}/>
+          <div style={{position:"relative"}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"4px 12px",
+              borderRadius:20,background:T.teal+"15",border:"1px solid "+T.teal+"30",
+              fontSize:10,fontWeight:700,color:T.teal,letterSpacing:1,marginBottom:16}}>
+              ⭐ CORE FEATURE
+            </div>
+            <h2 style={{fontSize:"clamp(26px,4vw,42px)",fontWeight:900,letterSpacing:-1,marginBottom:12,lineHeight:1.1}}>
+              🌍 Global Lead Discovery Engine
+            </h2>
+            <p style={{fontSize:16,color:"rgba(226,232,240,0.7)",maxWidth:620,lineHeight:1.7,marginBottom:28}}>
+              The ZoomInfo of emerging markets. Discover 300+ verified decision-makers at 120+ companies
+              across 50+ countries — filtered by intent signals, funding stage, tech stack, seniority,
+              and department. Every lead scored, every country compliance-checked.
+            </p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:32}}>
+              {["🎯 15 Intent Signals","💰 Funding Stage Filter","🛠️ Tech Stack Data","📊 AI Lead Scoring 0–99",
+                "🛡️ Auto Compliance Check","🏳️ 50+ Country Flags","💡 Business Culture Tips","🔍 Multi-Filter Search"].map(function(tag){
+                return <span key={tag} style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.06)",
+                  border:"1px solid rgba(255,255,255,0.1)",fontSize:12,color:"rgba(226,232,240,0.75)",fontWeight:500}}>{tag}</span>;
+              })}
+            </div>
+            <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+              <Link href="/login" style={{padding:"12px 28px",borderRadius:9,fontSize:14,fontWeight:700,
+                textDecoration:"none",background:`linear-gradient(135deg,${T.teal},${T.blue})`,color:"#07090F"}}>
+                Discover Leads Now →
+              </Link>
+              <div style={{display:"flex",gap:20,alignItems:"center"}}>
+                {[{n:"120+",l:"Companies"},{n:"300+",l:"Contacts"},{n:"50+",l:"Countries"},{n:"15",l:"Intent Signals"}].map(function(s){
+                  return <div key={s.l} style={{textAlign:"center"}}>
+                    <div style={{fontSize:20,fontWeight:800,color:T.teal}}>{s.n}</div>
+                    <div style={{fontSize:10,color:"rgba(226,232,240,0.45)",fontWeight:500}}>{s.l}</div>
+                  </div>;
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Features ── */}
-      <section id="features" style={{padding:"60px 32px",maxWidth:1100,margin:"0 auto"}}>
-        <h2 style={{fontSize:32,fontWeight:800,textAlign:"center",letterSpacing:-0.5,marginBottom:8}}>
-          Everything You Need to Close International Deals
-        </h2>
-        <p style={{textAlign:"center",fontSize:14,color:T.muted,marginBottom:48}}>
-          Built for B2B sales teams targeting global markets.
-        </p>
+      <section id="features" style={{padding:"24px 32px 60px",maxWidth:1100,margin:"0 auto"}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
-          {FEATURES.map(function(f){
+          {FEATURES.filter(function(f){return !f.highlight}).map(function(f){
             return (
               <div key={f.title} style={{background:T.surface,borderRadius:12,
                 border:"1px solid "+T.border,padding:22,
