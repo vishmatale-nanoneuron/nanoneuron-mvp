@@ -62,6 +62,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Silently ignore unrecognized env vars
 
 @lru_cache()
 def get_settings():
