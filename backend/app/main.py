@@ -13,6 +13,8 @@ from app.database import engine, Base
 from app.auth import auth
 from app.search import search
 from app.deals import deals, ai, dashboard, payment
+from app.ai_router import claude
+from app.routers_discovery import discovery
 
 settings = get_settings()
 
@@ -36,6 +38,8 @@ app.include_router(deals, prefix="/api")
 app.include_router(ai, prefix="/api")
 app.include_router(dashboard, prefix="/api")
 app.include_router(payment, prefix="/api")
+app.include_router(claude, prefix="/api")
+app.include_router(discovery, prefix="/api")
 
 @app.get("/api/health")
 async def health():

@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { apiFetch, API_BASE } from "../../lib/api";
+import AIHub from "../components/AIHub";
+import LeadDiscoveryEngine from "../components/LeadDiscoveryEngine";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 var T = {
@@ -28,9 +30,11 @@ var STAGE_COLORS = {
 
 var NAV = [
   {id:"dashboard", icon:"⬛", label:"Dashboard"},
-  {id:"search",    icon:"🔍", label:"Search Leads"},
+  {id:"discover",  icon:"🌍", label:"Discover Leads"},
+  {id:"search",    icon:"🔍", label:"Search"},
   {id:"contacts",  icon:"👥", label:"Contacts"},
   {id:"pipeline",  icon:"📋", label:"Pipeline"},
+  {id:"aihub",     icon:"⚡", label:"AI Hub"},
   {id:"email",     icon:"✉", label:"AI Email"},
   {id:"earnings",  icon:"₹",  label:"Earnings"},
   {id:"payment",   icon:"💳", label:"Billing"},
@@ -994,6 +998,9 @@ export default function Dashboard() {
           {/* Dashboard */}
           {tab==="dashboard" && <DashboardOverview stats={stats} pipeline={pipeline}/>}
 
+          {/* Global Lead Discovery Engine */}
+          {tab==="discover" && <LeadDiscoveryEngine/>}
+
           {/* Search — split layout: filter sidebar + results table */}
           {tab==="search" && (
             <div style={{flex:1,display:"flex",overflow:"hidden"}}>
@@ -1023,6 +1030,9 @@ export default function Dashboard() {
               onMoveStage={handleMoveStage} onRefresh={loadData}
             />
           )}
+
+          {/* AI Hub */}
+          {tab==="aihub" && <AIHub/>}
 
           {/* AI Email */}
           {tab==="email" && (
