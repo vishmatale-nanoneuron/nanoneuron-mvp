@@ -7,7 +7,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ANTHROPIC_API_KEY: str = ""
     HUNTER_API_KEY: str = ""          # hunter.io — email enrichment (set in Railway)
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "https://nanoneuron.ai", "https://www.nanoneuron.ai"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://nanoneuron.ai",
+        "https://www.nanoneuron.ai",
+        "https://nanoneuron-mvp.pages.dev",  # Cloudflare Pages default domain
+    ]
+    EXTRA_CORS_ORIGINS: str = ""  # Set in Railway: comma-separated extra origins
     FOUNDER_EMAIL: str = ""          # Set in Railway — only this email gets /api/founder/*
     FOUNDER_SECRET: str = ""         # Extra header secret for double verification
 

@@ -33,7 +33,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Nanoneuron CRM", version="1.0.0", lifespan=lifespan, docs_url="/docs",
     description="Find leads. Track deals. Stay compliant. — nanoneuron.ai")
 
-app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+_cors_origins = list(settings.CORS_ORIGINS)
+if settings.EXTRA_CORS_ORIGINS:
+    _cors_origins += [o.strip() for o in settings.EXTRA_CORS_ORIGINS.split(",") if o.strip()]
+
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(auth, prefix="/api")
 app.include_router(search, prefix="/api")
