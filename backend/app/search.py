@@ -541,6 +541,28 @@ class UnlockReq(BaseModel):
     company_domain: str
     contact_name: str
 
+async def _enrich_email_hunter(first: str, last: str, domain: str) -> str | None:
+    """Try Hunter.io to get a verified email. Returns email or None."""
+    key = settings.HUNTER_API_KEY
+    if not key:
+        return None
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            r = await client.get(
+                "https://api.hunter.io/v2/email-finder",
+                params={"domain": domain, "first_name": first, "last_name": last, "api_key": key}
+            )
+            data = r.json()
+            email = data.get("data", {}).get("email")
+            score = data.get("data", {}).get("score", 0)
+            if email and score >= 50:
+                return email
+    except Exception:
+        pass
+    return None
+
+
 @search.post("/unlock")
 async def unlock_lead(req: UnlockReq, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     if user.credits < 1:
@@ -557,16 +579,21 @@ async def unlock_lead(req: UnlockReq, user: User = Depends(get_current_user), db
     if not found: raise HTTPException(404, "Contact not found")
     user.credits -= 1
 
+    # Try Hunter.io enrichment for a verified real email
+    enriched_email = await _enrich_email_hunter(found["first"], found["last"], req.company_domain)
+    final_email = enriched_email if enriched_email else found["email"]
+    email_source = "hunter.io" if enriched_email else "database"
+
     # Auto-save to contacts book
     existing = (await db.execute(
-        select(SavedLead).where(SavedLead.user_id == user.id, SavedLead.contact_email == found["email"])
+        select(SavedLead).where(SavedLead.user_id == user.id, SavedLead.contact_email == final_email)
     )).scalar_one_or_none()
     if not existing:
         sc = score_lead(found, found_company)
         saved = SavedLead(
             user_id=user.id, company_name=found_company["company"],
             contact_name=found["first"] + " " + found["last"],
-            contact_email=found["email"], contact_title=found["title"],
+            contact_email=final_email, contact_title=found["title"],
             country=found_country, lead_score=sc, status="discovered",
             linkedin_url=found.get("linkedin", ""),
         )
@@ -574,10 +601,11 @@ async def unlock_lead(req: UnlockReq, user: User = Depends(get_current_user), db
 
     await db.commit()
     return {"success": True, "credits": user.credits, "lead": {
-        "name": found["first"] + " " + found["last"], "title": found["title"], "email": found["email"],
+        "name": found["first"] + " " + found["last"], "title": found["title"], "email": final_email,
         "department": found.get("dept",""), "linkedin": found.get("linkedin",""),
         "company": found_company["company"], "domain": found_company["domain"],
         "lead_score": score_lead(found, found_company),
+        "email_source": email_source,
     }}
 
 

@@ -150,6 +150,27 @@ Output ONLY valid JSON.""",
 
 
 # ─── 3. Deal Coach ─────────────────────────────────────────────────────────────
+COUNTRY_CULTURE = {
+    "US": {"name":"United States","style":"Direct, data-driven, ROI-focused. Get to the point fast.","best_days":"Tue–Thu","best_time":"10am–12pm EST","lang":"English","compliance":"CCPA","tip":"Lead with ROI numbers. Americans decide fast — don't over-nurture."},
+    "GB": {"name":"United Kingdom","style":"Formal but understated. Relationship matters. Avoid hard sell.","best_days":"Tue–Thu","best_time":"10am–12pm GMT","lang":"English","compliance":"UK GDPR","tip":"Be patient — UK deals take 2-3x longer than US. Understatement is valued."},
+    "DE": {"name":"Germany","style":"Technical, process-driven, formal. Titles matter (Dr./Prof.).","best_days":"Tue–Thu","best_time":"9am–11am CET","lang":"German preferred","compliance":"EU GDPR + BDSG","tip":"Send a formal written Angebot (proposal). Germans don't buy without seeing specs."},
+    "FR": {"name":"France","style":"Hierarchical, relationship-first. Decision maker is rarely your first contact.","best_days":"Tue–Wed","best_time":"10am–12pm CET","lang":"French preferred","compliance":"EU GDPR + CNIL","tip":"Avoid August (everyone on holiday). Find the real decision maker — usually 2 levels up."},
+    "IN": {"name":"India","style":"Relationship-first, price-sensitive, negotiation expected.","best_days":"Mon–Fri","best_time":"11am–1pm IST","lang":"English/Hindi","compliance":"DPDP Act 2023","tip":"Build personal rapport first. Price negotiation is expected — build margin in your initial quote."},
+    "JP": {"name":"Japan","style":"Consensus-driven, formal, long cycles. Never rush. Meishi (card exchange) matters.","best_days":"Tue–Thu","best_time":"10am–12pm JST","lang":"Japanese required","compliance":"APPI","tip":"Decisions require consensus from many levels. Expect 6-12 month cycles. Patience wins."},
+    "AE": {"name":"UAE","style":"Relationship and face-time critical. Hierarchy respected. Avoid Ramadan period.","best_days":"Mon–Thu","best_time":"10am–12pm GST","lang":"Arabic/English","compliance":"DIFC-DP","tip":"Meet in person if possible. Business over coffee/lunch is normal. Friday is weekend."},
+    "SG": {"name":"Singapore","style":"English-speaking, fast decisions, global mindset. Very professional.","best_days":"Tue–Thu","best_time":"10am–12pm SGT","lang":"English","compliance":"PDPA","tip":"Singapore is the fastest-closing market in Asia. Be crisp, professional, and data-backed."},
+    "AU": {"name":"Australia","style":"Informal, direct, no-nonsense. Tall poppy syndrome — don't oversell.","best_days":"Tue–Thu","best_time":"10am–12pm AEST","lang":"English","compliance":"Privacy Act 1988","tip":"Be genuine and direct. Australians distrust heavy sales tactics. Let the product speak."},
+    "CA": {"name":"Canada","style":"Similar to US but more formal. Bilingual in Quebec — French matters there.","best_days":"Tue–Thu","best_time":"10am–12pm EST","lang":"English/French","compliance":"PIPEDA","tip":"Very similar to US approach. Quebec clients prefer French communication."},
+    "BR": {"name":"Brazil","style":"Warm, relationship-driven, festive. Personal connection before business.","best_days":"Tue–Thu","best_time":"10am–12pm BRT","lang":"Portuguese required","compliance":"LGPD","tip":"Never rush to business. Ask about family, football. Warm personal bond closes Brazilian deals."},
+    "KR": {"name":"South Korea","style":"Hierarchical, fast-moving once trust is built. Samsung/Kakao ecosystem.","best_days":"Mon–Fri","best_time":"9am–11am KST","lang":"Korean preferred","compliance":"PIPA","tip":"Respect hierarchy strictly. Once a senior person is on board, the deal moves very fast."},
+    "ZA": {"name":"South Africa","style":"Ubuntu philosophy — community focus. English widely spoken. Relationship first.","best_days":"Tue–Thu","best_time":"9am–11am SAST","lang":"English","compliance":"POPIA","tip":"Reference your community/social impact angle. Ubuntu = 'I am because we are'."},
+    "SA": {"name":"Saudi Arabia","style":"Vision 2030 driven. Formal, Arabic first. Government relationships matter.","best_days":"Mon–Thu","best_time":"10am–12pm AST","lang":"Arabic preferred","compliance":"PDPL","tip":"Vision 2030 is a massive buying trigger. Everything is being modernised — position around transformation."},
+    "NL": {"name":"Netherlands","style":"Direct, consensus-driven, sustainability-focused. Very English-friendly.","best_days":"Tue–Thu","best_time":"9am–11am CET","lang":"English fine","compliance":"EU GDPR","tip":"Dutch are the most direct in Europe — say what you mean. They appreciate honesty over politeness."},
+    "SE": {"name":"Sweden","style":"Flat hierarchy, consensus, sustainability lens on every decision.","best_days":"Tue–Thu","best_time":"9am–11am CET","lang":"English fine","compliance":"EU GDPR","tip":"Sustainability credentials matter to Swedish buyers. Flat structure means anyone can say no."},
+    "IL": {"name":"Israel","style":"Direct, startup culture, move fast. Chutzpah is respected.","best_days":"Sun–Thu","best_time":"9am–11am IST","lang":"English/Hebrew","compliance":"Privacy Protection Law","tip":"Israelis appreciate boldness. Don't be shy about your product's strengths. Sunday is a workday."},
+    "CN": {"name":"China","style":"Guanxi (relationships) + price competition. Government connections matter.","best_days":"Tue–Thu","best_time":"10am–12pm CST","lang":"Chinese required","compliance":"PIPL","tip":"Guanxi (relationship network) is everything. Find a local partner/introducer. Price pressure will be extreme."},
+}
+
 class DealCoachReq(BaseModel):
     deal_title: str
     deal_value: float = 0
@@ -158,32 +179,51 @@ class DealCoachReq(BaseModel):
     notes: str = ""
     contact_title: str = ""
     days_in_stage: int = 0
+    company_name: str = ""
+    industry: str = ""
 
 @claude.post("/deal-coach")
 async def deal_coach(req: DealCoachReq, user: User = Depends(get_current_user)):
+    culture = COUNTRY_CULTURE.get(req.country.upper(), COUNTRY_CULTURE["US"])
+
     result = await ask_claude(
-        system="""You are a world-class B2B sales coach. Analyse the deal and give sharp, actionable advice.
-Format as JSON:
-{
+        system=f"""You are an elite global B2B sales coach specialising in deals with {culture['name']}.
+You know this country's business culture deeply: {culture['style']}
+Compliance requirement: {culture['compliance']}
+Language preference: {culture['lang']}
+Best contact time: {culture['best_days']}, {culture['best_time']}
+Key cultural tip: {culture['tip']}
+
+Analyse this deal and give sharp, specific, actionable advice tailored to {culture['name']} business culture.
+Format as JSON exactly:
+{{
   "win_probability": 65,
-  "stage_assessment": "On track / Stalled / At risk",
-  "top_risk": "One sentence",
-  "immediate_action": "The single most important thing to do TODAY",
-  "next_steps": ["step1", "step2", "step3"],
-  "talk_track": "Key thing to say on the next call (2-3 sentences)",
-  "red_flags": ["flag1"],
-  "deal_health": "green / yellow / red"
-}
-Be direct, specific, brutally honest. Output ONLY valid JSON.""",
+  "deal_health": "green",
+  "stage_assessment": "On track",
+  "immediate_action": "The single most important thing to do TODAY — be very specific",
+  "next_steps": ["specific step 1", "specific step 2", "specific step 3"],
+  "country_insight": "One critical cultural fact about selling in {culture['name']} that will change your approach",
+  "talk_track": "Exact words to say on the next call — 2-3 sentences tailored to {culture['name']} culture",
+  "compliance_alert": "Key compliance point for {culture['compliance']} relevant to this deal",
+  "best_contact_time": "{culture['best_days']}, {culture['best_time']}",
+  "red_flags": ["flag if any, or empty list"],
+  "top_risk": "Biggest risk to this deal right now"
+}}
+Be brutally honest and hyper-specific. Output ONLY valid JSON.""",
         prompt=f"Deal: {req.deal_title}\n"
+               f"Company: {req.company_name or 'Unknown'} | Industry: {req.industry or 'Unknown'}\n"
                f"Value: ${req.deal_value:,.0f} | Stage: {req.stage} | Days in stage: {req.days_in_stage}\n"
-               f"Country: {req.country} | Contact: {req.contact_title}\n"
-               f"Notes: {req.notes or 'None'}",
-        max_tokens=600,
+               f"Country: {req.country} | Contact: {req.contact_title or 'Unknown'}\n"
+               f"Notes: {req.notes or 'No notes yet'}\n"
+               f"Seller: {user.name} from {user.company_name or 'Nanoneuron Services'}",
+        max_tokens=800,
     )
     try:
         data = json.loads(result)
-        return {"success": True, "engine": "claude-sonnet-4-6", **data}
+        return {"success": True, "engine": "claude-sonnet-4-6",
+                "country_name": culture["name"], "country_flag": "",
+                "best_contact_time": culture["best_days"]+" · "+culture["best_time"],
+                "compliance": culture["compliance"], **data}
     except:
         return {"success": True, "engine": "claude-sonnet-4-6", "raw": result}
 

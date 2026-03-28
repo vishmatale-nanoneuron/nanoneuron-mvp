@@ -123,3 +123,40 @@ class EmailTemplate(Base):
     language = Column(String(10), default="en")
     use_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Invoice(Base):
+    """GST / Export invoices generated for clients"""
+    __tablename__ = "invoices"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uid)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    invoice_number = Column(String(50), unique=True, nullable=False)  # NN/2026/001
+
+    # Buyer details
+    buyer_name = Column(String(255), nullable=False)
+    buyer_email = Column(String(255))
+    buyer_company = Column(String(255))
+    buyer_gstin = Column(String(20))          # Optional — for B2B GST invoice
+    buyer_address = Column(Text)
+    buyer_state = Column(String(100))         # For CGST/SGST vs IGST determination
+    buyer_country = Column(String(5), default="IN")
+
+    # Service details
+    plan = Column(String(50))                 # starter, pro, business
+    description = Column(Text)
+    sac_code = Column(String(20), default="998314")  # SAC: IT/Software services
+
+    # Amounts
+    currency = Column(String(5), default="INR")
+    amount_before_tax = Column(Float, nullable=False)
+    is_export = Column(Boolean, default=False)   # USD/GBP/EUR = export invoice, 0% GST
+    is_igst = Column(Boolean, default=False)     # True = inter-state (IGST), False = intra-state (CGST+SGST)
+    cgst_amount = Column(Float, default=0)
+    sgst_amount = Column(Float, default=0)
+    igst_amount = Column(Float, default=0)
+    total_amount = Column(Float, nullable=False)
+
+    # Status
+    status = Column(String(50), default="draft")  # draft, sent, paid
+    notes = Column(Text)
+    invoice_date = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
