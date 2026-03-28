@@ -47,3 +47,45 @@ select option {
 button { transition: opacity 0.15s, background 0.15s; }
 button:hover { opacity: 0.9; }
 button:active { opacity: 0.75; }
+
+/* ─── Responsive Utilities ─────────────────────────────────────────────── */
+
+/* Landing page nav */
+@media (max-width: 768px) {
+  .nav-links { display: none !important; }
+  .nav-pad { padding: 0 16px !important; }
+  .hero-pad { padding: 48px 16px 40px !important; }
+  .hero-cta { flex-direction: column !important; align-items: stretch !important; }
+  .hero-cta a { text-align: center !important; }
+  .stats-row { flex-wrap: wrap !important; }
+  .stats-row > div { min-width: 45% !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
+  .section-pad { padding: 16px !important; }
+  .pricing-grid { grid-template-columns: 1fr !important; }
+  .features-grid { grid-template-columns: 1fr !important; }
+  .compliance-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .discovery-hero { padding: 24px 20px !important; }
+  .discovery-tags { gap: 6px !important; }
+  .discovery-tags span { font-size: 10px !important; padding: 4px 8px !important; }
+  .discovery-stats { flex-wrap: wrap !important; gap: 12px !important; }
+  .footer-grid { grid-template-columns: 1fr 1fr !important; }
+  .footer-links { gap: 12px !important; flex-wrap: wrap !important; }
+  .mock-table-wrap { display: none !important; }
+  .earnings-grid { grid-template-columns: 1fr !important; }
+  .templates-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .compliance-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .discovery-stats > div { min-width: 40% !important; }
+}
+
+/* Pipeline horizontal scroll hint on touch */
+@media (max-width: 1024px) {
+  .pipeline-board { -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+  .pipeline-col { scroll-snap-align: start; }
+}
+
+/* Dashboard content fills full width on mobile (sidebar is overlay) */
+@media (max-width: 767px) {
+  .dashboard-main { padding-bottom: 68px !important; }
+}

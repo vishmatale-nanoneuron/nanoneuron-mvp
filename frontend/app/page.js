@@ -52,7 +52,7 @@ export default function Home() {
     <div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
 
       {/* ── Nav ── */}
-      <nav style={{position:"sticky",top:0,zIndex:50,height:60,borderBottom:"1px solid "+T.border,
+      <nav className="nav-pad" style={{position:"sticky",top:0,zIndex:50,height:60,borderBottom:"1px solid "+T.border,
         background:T.sidebar+"EE",backdropFilter:"blur(12px)",
         display:"flex",alignItems:"center",padding:"0 32px",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -66,26 +66,26 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{display:"flex",alignItems:"center",gap:28}}>
+        <div className="nav-links" style={{display:"flex",alignItems:"center",gap:28}}>
           {["Features","Pricing","Compliance"].map(function(l){
             return <a key={l} href={"#"+l.toLowerCase()} style={{fontSize:13,color:T.muted,textDecoration:"none",
               fontWeight:500}}>{l}</a>;
           })}
         </div>
 
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <Link href="/login" style={{fontSize:13,color:T.muted,textDecoration:"none",padding:"7px 14px",fontWeight:500}}>
             Sign In
           </Link>
-          <Link href="/login" style={{padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:700,
-            textDecoration:"none",background:`linear-gradient(135deg,${T.blue},${T.purple})`,color:"#07090F"}}>
-            Start Free Trial
+          <Link href="/login" style={{padding:"8px 18px",borderRadius:8,fontSize:13,fontWeight:700,
+            textDecoration:"none",background:`linear-gradient(135deg,${T.blue},${T.purple})`,color:"#07090F",whiteSpace:"nowrap"}}>
+            Free Trial
           </Link>
         </div>
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{padding:"80px 32px 72px",maxWidth:1000,margin:"0 auto",textAlign:"center"}}>
+      <section className="hero-pad" style={{padding:"80px 32px 72px",maxWidth:1000,margin:"0 auto",textAlign:"center"}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",
           borderRadius:20,border:"1px solid "+T.teal+"30",background:T.teal+"10",
           fontSize:11,color:T.teal,fontWeight:700,marginBottom:16,letterSpacing:0.5}}>
@@ -110,7 +110,7 @@ export default function Home() {
           Intent signals · Tech stack data · Funding stage · Seniority scoring · GDPR/CCPA/LGPD auto-compliance
         </p>
 
-        <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:52}}>
+        <div className="hero-cta" style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:52}}>
           <Link href="/login" style={{padding:"14px 32px",borderRadius:10,fontSize:15,fontWeight:700,
             textDecoration:"none",background:`linear-gradient(135deg,${T.blue},${T.purple})`,color:"#07090F"}}>
             Start 7-Day Free Trial →
@@ -123,7 +123,7 @@ export default function Home() {
         </div>
 
         {/* Stats */}
-        <div style={{display:"flex",gap:0,justifyContent:"center",borderRadius:14,
+        <div className="stats-row" style={{display:"flex",gap:0,justifyContent:"center",borderRadius:14,
           border:"1px solid "+T.border,background:T.surface,overflow:"hidden",
           maxWidth:600,margin:"0 auto"}}>
           {STATS.map(function(s,i){
@@ -139,7 +139,7 @@ export default function Home() {
       </section>
 
       {/* ── Product Preview (ZoomInfo-like table mock) ── */}
-      <section style={{padding:"0 32px 72px",maxWidth:1100,margin:"0 auto"}}>
+      <section className="mock-table-wrap" style={{padding:"0 32px 72px",maxWidth:1100,margin:"0 auto"}}>
         <div style={{borderRadius:14,border:"1px solid "+T.border,overflow:"hidden",background:T.surface}}>
           {/* Mock header bar */}
           <div style={{background:T.sidebar,padding:"10px 16px",borderBottom:"1px solid "+T.border,
@@ -225,8 +225,8 @@ export default function Home() {
       </section>
 
       {/* ── Global Discovery Hero Feature ── */}
-      <section style={{padding:"60px 32px 0",maxWidth:1100,margin:"0 auto"}}>
-        <div style={{background:"linear-gradient(135deg,#0B1629 0%,#0D1220 50%,#0B1629 100%)",
+      <section className="section-pad" style={{padding:"60px 32px 0",maxWidth:1100,margin:"0 auto"}}>
+        <div className="discovery-hero" style={{background:"linear-gradient(135deg,#0B1629 0%,#0D1220 50%,#0B1629 100%)",
           border:"1px solid "+T.teal+"30",borderRadius:16,padding:"40px 48px",marginBottom:20,
           position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:-60,right:-60,width:300,height:300,borderRadius:"50%",
@@ -247,7 +247,7 @@ export default function Home() {
               across 50+ countries — filtered by intent signals, funding stage, tech stack, seniority,
               and department. Every lead scored, every country compliance-checked.
             </p>
-            <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:32}}>
+            <div className="discovery-tags" style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:32}}>
               {["🎯 15 Intent Signals","💰 Funding Stage Filter","🛠️ Tech Stack Data","📊 AI Lead Scoring 0–99",
                 "🛡️ Auto Compliance Check","🏳️ 50+ Country Flags","💡 Business Culture Tips","🔍 Multi-Filter Search"].map(function(tag){
                 return <span key={tag} style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.06)",
@@ -273,8 +273,8 @@ export default function Home() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" style={{padding:"24px 32px 60px",maxWidth:1100,margin:"0 auto"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
+      <section id="features" className="section-pad" style={{padding:"24px 32px 60px",maxWidth:1100,margin:"0 auto"}}>
+        <div className="features-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14}}>
           {FEATURES.filter(function(f){return !f.highlight}).map(function(f){
             return (
               <div key={f.title} style={{background:T.surface,borderRadius:12,
@@ -321,14 +321,14 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{padding:"72px 32px",maxWidth:960,margin:"0 auto"}}>
+      <section id="pricing" className="section-pad" style={{padding:"72px 32px",maxWidth:960,margin:"0 auto"}}>
         <h2 style={{fontSize:32,fontWeight:800,textAlign:"center",letterSpacing:-0.5,marginBottom:6}}>
           Simple, Transparent Pricing
         </h2>
         <p style={{textAlign:"center",fontSize:13,color:T.muted,marginBottom:48}}>
           7-day free trial. Then choose the plan that fits your team.
         </p>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16}}>
+        <div className="pricing-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16}}>
           {PLANS.map(function(p){
             return (
               <div key={p.id} style={{background:T.surface,borderRadius:16,
@@ -362,7 +362,7 @@ export default function Home() {
           })}
         </div>
         <p style={{textAlign:"center",fontSize:11,color:T.faint,marginTop:24}}>
-          Payment via SWIFT (USD/GBP/EUR) · NEFT/UPI (INR) · Direct to Axis Bank · billing@nanoneuron.ai
+          Payment via SWIFT (USD/GBP/EUR) · NEFT/UPI (INR) · Direct to Axis Bank · service@nanoneuron.ai
         </p>
       </section>
 
@@ -383,7 +383,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{padding:"24px 32px",borderTop:"1px solid "+T.border,
+      <footer className="footer-links" style={{padding:"24px 16px",borderTop:"1px solid "+T.border,
         display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:24,height:24,borderRadius:6,
@@ -394,7 +394,7 @@ export default function Home() {
           <span style={{fontSize:10,color:T.faint}}>· GST Registered Proprietorship · India · © 2026</span>
         </div>
         <div style={{display:"flex",gap:20}}>
-          {["billing@nanoneuron.ai","support@nanoneuron.ai"].map(function(e){
+          {["service@nanoneuron.ai"].map(function(e){
             return <a key={e} href={"mailto:"+e} style={{fontSize:11,color:T.muted,textDecoration:"none"}}>{e}</a>;
           })}
         </div>
