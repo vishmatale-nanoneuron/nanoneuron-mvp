@@ -395,3 +395,132 @@ async def add_credits(body: dict, db: AsyncSession = Depends(get_db)):
     user.credits += amount
     await db.commit()
     return {"success": True, "email": email, "credits": user.credits, "added": amount}
+
+
+# ─── Payment Confirmation (client submits transfer proof) ─────────
+class PaymentConfirmRequest(BaseModel):
+    plan: str
+    currency: str          # INR | USD | GBP | EUR
+    amount: float
+    transfer_ref: str      # UTR / SWIFT ref / IMPS ref
+    buyer_name: str
+    buyer_email: str
+    buyer_company: Optional[str] = None
+    buyer_phone: Optional[str] = None
+    notes: Optional[str] = None
+
+@payment.post("/confirm")
+async def confirm_payment(req: PaymentConfirmRequest, db: AsyncSession = Depends(get_db)):
+    """Client calls this after bank transfer — notifies founder via email."""
+    import smtplib, ssl
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    s = get_settings()
+    plan_details = {
+        "starter":  {"credits": 100,  "label": "Starter Plan"},
+        "pro":      {"credits": 500,  "label": "Pro Plan"},
+        "business": {"credits": 2500, "label": "Business Plan"},
+    }
+    pd = plan_details.get(req.plan.lower(), {"credits": 100, "label": req.plan})
+
+    # Format currency
+    sym = {"INR": "₹", "USD": "$", "GBP": "£", "EUR": "€"}.get(req.currency, req.currency)
+    amt_str = f"{sym}{req.amount:,.2f}"
+
+    subject = f"💰 New Payment — {req.buyer_name} | {amt_str} | {pd['label']}"
+    body = f"""
+New payment confirmation received on Nanoneuron.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIENT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name:     {req.buyer_name}
+Email:    {req.buyer_email}
+Company:  {req.buyer_company or "—"}
+Phone:    {req.buyer_phone or "—"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PAYMENT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Plan:      {pd['label']}
+Amount:    {amt_str}
+Currency:  {req.currency}
+Reference: {req.transfer_ref}
+Credits:   {pd['credits']}/month
+
+Notes: {req.notes or "None"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ACTION REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Verify transfer in Axis Bank account
+2. Run: POST /api/payment/activate
+   {{ "user_email": "{req.buyer_email}", "plan": "{req.plan}", "credits": {pd['credits']}, "founder_key": "YOUR_JWT_SECRET" }}
+3. Generate invoice via /api/invoices/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nanoneuron · service@nanoneuron.ai
+    """.strip()
+
+    # Send email if SMTP configured
+    sent = False
+    if s.SMTP_HOST and s.SMTP_USER and s.SMTP_PASS and s.FOUNDER_EMAIL:
+        try:
+            msg = MIMEMultipart()
+            msg["From"] = s.SMTP_USER
+            msg["To"] = s.FOUNDER_EMAIL
+            msg["Subject"] = subject
+            msg["Reply-To"] = req.buyer_email
+            msg.attach(MIMEText(body, "plain"))
+            ctx = ssl.create_default_context()
+            with smtplib.SMTP(s.SMTP_HOST, s.SMTP_PORT) as srv:
+                srv.starttls(context=ctx)
+                srv.login(s.SMTP_USER, s.SMTP_PASS)
+                srv.sendmail(s.SMTP_USER, s.FOUNDER_EMAIL, msg.as_string())
+            sent = True
+        except Exception as e:
+            print(f"Email send failed: {e}")
+
+    # Also send confirmation to client
+    if s.SMTP_HOST and s.SMTP_USER and s.SMTP_PASS:
+        try:
+            client_body = f"""Dear {req.buyer_name},
+
+We have received your payment confirmation for Nanoneuron {pd['label']}.
+
+Payment Reference: {req.transfer_ref}
+Amount: {amt_str}
+Plan: {pd['label']} — {pd['credits']} lead unlocks/month
+
+Your account will be activated within 24 hours of bank verification.
+You will receive a confirmation email at {req.buyer_email} once active.
+
+For any queries: service@nanoneuron.ai
+
+Thank you for choosing Nanoneuron.
+
+— Nanoneuron Team
+nanoneuron.ai
+            """.strip()
+            msg2 = MIMEMultipart()
+            msg2["From"] = s.SMTP_USER
+            msg2["To"] = req.buyer_email
+            msg2["Subject"] = f"Payment Confirmation Received — Nanoneuron {pd['label']}"
+            msg2.attach(MIMEText(client_body, "plain"))
+            ctx = ssl.create_default_context()
+            with smtplib.SMTP(s.SMTP_HOST, s.SMTP_PORT) as srv:
+                srv.starttls(context=ctx)
+                srv.login(s.SMTP_USER, s.SMTP_PASS)
+                srv.sendmail(s.SMTP_USER, req.buyer_email, msg2.as_string())
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "message": "Payment confirmation received. Your account will be activated within 24 hours of bank verification.",
+        "reference": req.transfer_ref,
+        "plan": pd["label"],
+        "email_sent": sent,
+        "next_step": f"Email service@nanoneuron.ai if not activated within 24 hours. Quote ref: {req.transfer_ref}",
+    }

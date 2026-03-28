@@ -2766,6 +2766,15 @@ export default function Dashboard() {
           {/* Separator */}
           <div style={{flex:1}}/>
           <div style={{height:1,background:T.border,margin:"8px 0"}}/>
+          <a href="/upgrade" style={{
+            display:"flex",alignItems:"center",gap:9,padding:"9px 12px",
+            borderRadius:8,textDecoration:"none",cursor:"pointer",textAlign:"left",width:"100%",
+            background:"linear-gradient(135deg,#4F8EF718,#7C3AED18)",
+            border:"1px solid #4F8EF730",color:T.blue,fontSize:12,fontWeight:700,
+            boxSizing:"border-box",marginBottom:4}}>
+            <span style={{fontSize:14,width:18,textAlign:"center"}}>⬆</span>
+            Upgrade Plan
+          </a>
           <button onClick={function(){localStorage.clear();window.location.href="/"}} style={{
             display:"flex",alignItems:"center",gap:9,padding:"9px 12px",
             borderRadius:8,border:"none",cursor:"pointer",textAlign:"left",width:"100%",
