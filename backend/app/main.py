@@ -16,6 +16,7 @@ from app.deals import deals, ai, dashboard, payment
 from app.ai_router import claude
 from app.routers_discovery import discovery
 from app.routers_notes import notes_router, templates_router
+from app.routers_founder import founder_router
 
 settings = get_settings()
 
@@ -43,6 +44,7 @@ app.include_router(claude, prefix="/api")
 app.include_router(discovery, prefix="/api")
 app.include_router(notes_router, prefix="/api")
 app.include_router(templates_router, prefix="/api")
+app.include_router(founder_router, prefix="/api")
 
 @app.get("/api/health")
 async def health():

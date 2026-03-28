@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ANTHROPIC_API_KEY: str = ""
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "https://nanoneuron.ai", "https://www.nanoneuron.ai"]
+    FOUNDER_EMAIL: str = ""          # Set in Railway — only this email gets /api/founder/*
+    FOUNDER_SECRET: str = ""         # Extra header secret for double verification
     FREE_CREDITS: int = 10
     CREDIT_COST_PER_LEAD: int = 1
     SMTP_HOST: str = ""
