@@ -366,6 +366,273 @@ GLOBAL_DB = [
     {"first":"Nguyen","last":"Van An","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
     {"first":"Tran","last":"Thi Lan","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
   ]},
+
+  # ── SAAS EXPANSION ───────────────────────────────────────────────
+  {"id":"c061","company":"Vizura Software","domain":"vizura.fr","industry":"saas","country":"FR","city":"Paris","emp":"100-500","rev":"$15M-$50M","founded":2016,"funding":"Series B — $28M","growth":"+38% YoY","intent":["series_b_funded","expanding_globally","hiring_engineers"],"tech":["AWS","HubSpot","Stripe","Salesforce"],"contacts":[
+    {"first":"Pierre","last":"Dubois","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Claire","last":"Martin","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":86},
+    {"first":"Antoine","last":"Bernard","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c062","company":"Finloop IT","domain":"finloop.it","industry":"saas","country":"IT","city":"Milan","emp":"50-300","rev":"$10M-$40M","founded":2018,"funding":"Series A — $14M","growth":"+50% YoY","intent":["series_a_funded","cloud_migration","hiring_engineers"],"tech":["AWS","Salesforce","HubSpot","Stripe"],"contacts":[
+    {"first":"Marco","last":"Rossi","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Giulia","last":"Ferrari","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c063","company":"AppWave ES","domain":"appwave.es","industry":"saas","country":"ES","city":"Madrid","emp":"100-400","rev":"$10M-$35M","founded":2017,"funding":"Series A — $16M","growth":"+45% YoY","intent":["expanding_globally","series_a_funded"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Carlos","last":"González","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"María","last":"López","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+  {"id":"c064","company":"TechBase PT","domain":"techbase.pt","industry":"saas","country":"PT","city":"Lisbon","emp":"50-200","rev":"$5M-$20M","founded":2019,"funding":"Seed — $5M","growth":"+80% YoY","intent":["series_a_funded","hiring_engineers","new_product_launch"],"tech":["AWS","HubSpot","Stripe","Vercel"],"contacts":[
+    {"first":"João","last":"Ferreira","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Ana","last":"Costa","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c065","company":"CloudPeak CZ","domain":"cloudpeak.cz","industry":"saas","country":"CZ","city":"Prague","emp":"50-200","rev":"$5M-$20M","founded":2018,"funding":"Series A — $11M","growth":"+60% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","HubSpot","Salesforce"],"contacts":[
+    {"first":"Tomáš","last":"Novák","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Lucie","last":"Dvořáková","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":85},
+  ]},
+  {"id":"c066","company":"DataSmart HU","domain":"datasmart.hu","industry":"saas","country":"HU","city":"Budapest","emp":"50-200","rev":"$5M-$20M","founded":2017,"funding":"Series A — $9M","growth":"+55% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Péter","last":"Nagy","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Eszter","last":"Kovács","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":84},
+  ]},
+  {"id":"c067","company":"StackNorth FI","domain":"stacknorth.fi","industry":"saas","country":"FI","city":"Helsinki","emp":"50-200","rev":"$5M-$20M","founded":2018,"funding":"Series A — $10M","growth":"+52% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","HubSpot","Snowflake"],"contacts":[
+    {"first":"Mikko","last":"Virtanen","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Sanna","last":"Mäkinen","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c068","company":"DevWave DK","domain":"devwave.dk","industry":"saas","country":"DK","city":"Copenhagen","emp":"50-200","rev":"$8M-$25M","founded":2017,"funding":"Series A — $12M","growth":"+48% YoY","intent":["series_a_funded","expanding_globally","hiring_engineers"],"tech":["AWS","HubSpot","Stripe","Kubernetes"],"contacts":[
+    {"first":"Søren","last":"Larsen","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Astrid","last":"Hansen","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c069","company":"OsloCloud NO","domain":"oslocloud.no","industry":"saas","country":"NO","city":"Oslo","emp":"50-300","rev":"$10M-$35M","founded":2016,"funding":"Series A — $15M","growth":"+43% YoY","intent":["series_a_funded","cloud_migration"],"tech":["AWS","HubSpot","Salesforce"],"contacts":[
+    {"first":"Tor","last":"Eriksen","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Ingrid","last":"Berg","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c070","company":"BruxellesTech BE","domain":"bruxelles.tech","industry":"saas","country":"BE","city":"Brussels","emp":"100-400","rev":"$10M-$40M","founded":2016,"funding":"Series B — $22M","growth":"+40% YoY","intent":["series_b_funded","expanding_globally","compliance_audit"],"tech":["AWS","Salesforce","HubSpot"],"contacts":[
+    {"first":"Nicolas","last":"Lecomte","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Sophie","last":"Laurent","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+
+  # ── FINTECH EXPANSION ────────────────────────────────────────────
+  {"id":"c071","company":"PayNow MX","domain":"paynow.mx","industry":"fintech","country":"MX","city":"Mexico City","emp":"200-800","rev":"$30M-$120M","founded":2015,"funding":"Series C — $80M","growth":"+70% YoY","intent":["series_b_funded","expanding_globally","hiring_engineers"],"tech":["AWS","Stripe","Salesforce","Kubernetes"],"contacts":[
+    {"first":"Diego","last":"Hernández","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Valentina","last":"Ruiz","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c072","company":"CashLink AR","domain":"cashlink.com.ar","industry":"fintech","country":"AR","city":"Buenos Aires","emp":"100-400","rev":"$15M-$60M","founded":2017,"funding":"Series B — $35M","growth":"+85% YoY","intent":["series_b_funded","expanding_globally"],"tech":["AWS","Stripe","HubSpot"],"contacts":[
+    {"first":"Lucía","last":"Fernández","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Mateo","last":"García","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c073","company":"PagoFast CL","domain":"pagofast.cl","industry":"fintech","country":"CL","city":"Santiago","emp":"50-200","rev":"$10M-$40M","founded":2018,"funding":"Series A — $18M","growth":"+75% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","Stripe","Salesforce"],"contacts":[
+    {"first":"Sebastián","last":"Muñoz","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Camila","last":"Torres","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c074","company":"AsiaFinance MY","domain":"asiafinance.my","industry":"fintech","country":"MY","city":"Kuala Lumpur","emp":"100-500","rev":"$15M-$60M","founded":2016,"funding":"Series B — $28M","growth":"+62% YoY","intent":["series_b_funded","expanding_globally","digital_transformation"],"tech":["AWS","Stripe","Salesforce"],"contacts":[
+    {"first":"Ahmad","last":"Razali","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Nurul","last":"Huda","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c075","company":"PayPhil PH","domain":"payphil.ph","industry":"fintech","country":"PH","city":"Manila","emp":"100-400","rev":"$10M-$40M","founded":2017,"funding":"Series A — $20M","growth":"+80% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","Stripe","HubSpot"],"contacts":[
+    {"first":"Jose","last":"Santos","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Maria","last":"Cruz","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c076","company":"ThaiFintech TH","domain":"thaifin.co.th","industry":"fintech","country":"TH","city":"Bangkok","emp":"50-200","rev":"$8M-$30M","founded":2018,"funding":"Series A — $14M","growth":"+70% YoY","intent":["series_a_funded","digital_transformation"],"tech":["AWS","Stripe","HubSpot"],"contacts":[
+    {"first":"Somchai","last":"Wongkul","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Ploy","last":"Chaiyasin","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":85},
+  ]},
+  {"id":"c077","company":"EgyptPay EG","domain":"egyptpay.eg","industry":"fintech","country":"EG","city":"Cairo","emp":"100-500","rev":"$10M-$50M","founded":2017,"funding":"Series A — $22M","growth":"+90% YoY","intent":["series_a_funded","expanding_globally","digital_transformation"],"tech":["AWS","HubSpot","Salesforce"],"contacts":[
+    {"first":"Omar","last":"Hassan","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Layla","last":"Ibrahim","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c078","company":"PakPay PK","domain":"pakpay.pk","industry":"fintech","country":"PK","city":"Karachi","emp":"50-200","rev":"$5M-$20M","founded":2019,"funding":"Seed — $6M","growth":"+110% YoY","intent":["series_a_funded","new_product_launch"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Ahsan","last":"Malik","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Sara","last":"Khan","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":85},
+  ]},
+
+  # ── CYBERSECURITY EXPANSION ──────────────────────────────────────
+  {"id":"c079","company":"CyberFort AU","domain":"cyberfort.com.au","industry":"cybersecurity","country":"AU","city":"Melbourne","emp":"100-400","rev":"$15M-$60M","founded":2015,"funding":"Series B — $30M","growth":"+65% YoY","intent":["series_b_funded","ciso_hired","compliance_audit"],"tech":["AWS","CrowdStrike","Okta","SentinelOne"],"contacts":[
+    {"first":"Andrew","last":"Thompson","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Kate","last":"Murphy","title":"CISO","dept":"Security","seniority":"C-Suite","score_base":90},
+  ]},
+  {"id":"c080","company":"GuardNet CA","domain":"guardnet.ca","industry":"cybersecurity","country":"CA","city":"Vancouver","emp":"50-200","rev":"$10M-$40M","founded":2016,"funding":"Series A — $17M","growth":"+58% YoY","intent":["series_a_funded","ciso_hired"],"tech":["AWS","Palo Alto","CrowdStrike"],"contacts":[
+    {"first":"Jason","last":"MacDonald","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Rachel","last":"Tremblay","title":"CISO","dept":"Security","seniority":"C-Suite","score_base":89},
+  ]},
+  {"id":"c081","company":"ShieldKR","domain":"shieldkr.co.kr","industry":"cybersecurity","country":"KR","city":"Seoul","emp":"100-400","rev":"$15M-$60M","founded":2014,"funding":"Series B — $28M","growth":"+72% YoY","intent":["series_b_funded","expanding_globally","ciso_hired"],"tech":["AWS","CrowdStrike","Palo Alto","Okta"],"contacts":[
+    {"first":"Park","last":"Joon-Seo","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Kim","last":"Min-Jung","title":"CISO","dept":"Security","seniority":"C-Suite","score_base":90},
+  ]},
+  {"id":"c082","company":"SecureTW","domain":"securetw.com.tw","industry":"cybersecurity","country":"TW","city":"Taipei","emp":"100-400","rev":"$15M-$55M","founded":2013,"funding":"Series B — $25M","growth":"+60% YoY","intent":["series_b_funded","hiring_engineers"],"tech":["AWS","CrowdStrike","Palo Alto"],"contacts":[
+    {"first":"Chen","last":"Wei-Liang","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Lin","last":"Shu-Fen","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c083","company":"CyberRU","domain":"cyberru.tech","industry":"cybersecurity","country":"RU","city":"Moscow","emp":"200-800","rev":"$20M-$80M","founded":2012,"funding":"PE-backed","growth":"+25% YoY","intent":["hiring_engineers","tech_refresh"],"tech":["Kaspersky","Positive Tech","Yandex Cloud"],"contacts":[
+    {"first":"Dmitry","last":"Volkov","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Elena","last":"Petrova","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":85},
+  ]},
+
+  # ── HEALTHCARE EXPANSION ─────────────────────────────────────────
+  {"id":"c084","company":"MedTech AU","domain":"medtech.com.au","industry":"healthcare","country":"AU","city":"Brisbane","emp":"100-500","rev":"$20M-$80M","founded":2014,"funding":"Series B — $38M","growth":"+40% YoY","intent":["digital_transformation","series_b_funded"],"tech":["AWS","Salesforce","Epic"],"contacts":[
+    {"first":"Sarah","last":"Williams","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"James","last":"Harris","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c085","company":"HealthOS UK","domain":"healthos.co.uk","industry":"healthcare","country":"GB","city":"Manchester","emp":"100-400","rev":"$15M-$60M","founded":2016,"funding":"Series A — $20M","growth":"+45% YoY","intent":["series_a_funded","digital_transformation","compliance_audit"],"tech":["Azure","Salesforce","NHS API"],"contacts":[
+    {"first":"James","last":"Fletcher","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Emma","last":"Robinson","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c086","company":"MedHub SG","domain":"medhub.sg","industry":"healthcare","country":"SG","city":"Singapore","emp":"100-500","rev":"$20M-$80M","founded":2015,"funding":"Series B — $32M","growth":"+48% YoY","intent":["series_b_funded","cloud_migration"],"tech":["AWS","Azure","Epic"],"contacts":[
+    {"first":"Dr. Lim","last":"Kheng Wah","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Raymond","last":"Ong","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c087","company":"HealthBridge KR","domain":"healthbridge.kr","industry":"healthcare","country":"KR","city":"Seoul","emp":"200-800","rev":"$30M-$100M","founded":2014,"funding":"Series C — $55M","growth":"+35% YoY","intent":["series_b_funded","digital_transformation"],"tech":["AWS","Samsung Health","SAP"],"contacts":[
+    {"first":"Choi","last":"Young-Soo","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Lee","last":"Mi-Rae","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+
+  # ── MANUFACTURING / INDUSTRY 4.0 ─────────────────────────────────
+  {"id":"c088","company":"Industria 4.0 IT","domain":"industria40.it","industry":"manufacturing","country":"IT","city":"Turin","emp":"500-5000","rev":"$100M-$500M","founded":2000,"funding":"Listed","growth":"+12% YoY","intent":["digital_transformation","tech_refresh","cloud_migration"],"tech":["Azure","SAP","Siemens IIOT"],"contacts":[
+    {"first":"Luca","last":"Russo","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Francesca","last":"Colombo","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c089","company":"PrecisionKR","domain":"precision.kr","industry":"manufacturing","country":"KR","city":"Ulsan","emp":"5000-50000","rev":"$2B+","founded":1985,"funding":"Listed (KRX)","growth":"+8% YoY","intent":["digital_transformation","cloud_migration","tech_refresh"],"tech":["Azure","SAP","Samsung IT"],"contacts":[
+    {"first":"Jung","last":"Woo-Seok","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":95},
+    {"first":"Oh","last":"Sang-Hoon","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":89},
+  ]},
+  {"id":"c090","company":"ManuFab IN","domain":"manufab.in","industry":"manufacturing","country":"IN","city":"Pune","emp":"1000-10000","rev":"$200M-$1B","founded":2000,"funding":"Listed (BSE)","growth":"+15% YoY","intent":["digital_transformation","cloud_migration"],"tech":["Azure","SAP","Oracle"],"contacts":[
+    {"first":"Suresh","last":"Desai","title":"MD & CEO","dept":"Executive","seniority":"C-Suite","score_base":94},
+    {"first":"Neeraj","last":"Kumar","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+
+  # ── EDUCATION EXPANSION ──────────────────────────────────────────
+  {"id":"c091","company":"EduTech UK","domain":"edutech.co.uk","industry":"education","country":"GB","city":"London","emp":"100-500","rev":"$20M-$80M","founded":2016,"funding":"Series B — $40M","growth":"+50% YoY","intent":["series_b_funded","expanding_globally"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"James","last":"Taylor","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Lucy","last":"Wright","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c092","company":"Lernen DE","domain":"lernen.de","industry":"education","country":"DE","city":"Berlin","emp":"100-400","rev":"$15M-$60M","founded":2017,"funding":"Series A — $22M","growth":"+55% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Kai","last":"Neumann","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Julia","last":"Hartmann","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+
+  # ── LOGISTICS EXPANSION ──────────────────────────────────────────
+  {"id":"c093","company":"LogiTech MX","domain":"logitech.mx","industry":"logistics","country":"MX","city":"Monterrey","emp":"500-2000","rev":"$50M-$200M","founded":2010,"funding":"Series C — $70M","growth":"+22% YoY","intent":["digital_transformation","tech_refresh"],"tech":["AWS","SAP","Oracle"],"contacts":[
+    {"first":"Alejandro","last":"Morales","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Rosa","last":"Ramírez","title":"COO","dept":"Operations","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c094","company":"ShipEasy AU","domain":"shipeasy.com.au","industry":"logistics","country":"AU","city":"Perth","emp":"200-1000","rev":"$30M-$100M","founded":2013,"funding":"Series B — $42M","growth":"+28% YoY","intent":["digital_transformation","cloud_migration"],"tech":["AWS","SAP","Salesforce"],"contacts":[
+    {"first":"Scott","last":"Morrison","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Lisa","last":"Chang","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c095","company":"LogCore ZA","domain":"logcore.co.za","industry":"logistics","country":"ZA","city":"Johannesburg","emp":"200-800","rev":"$20M-$80M","founded":2012,"funding":"Series B — $30M","growth":"+25% YoY","intent":["digital_transformation","tech_refresh"],"tech":["Azure","SAP","Oracle"],"contacts":[
+    {"first":"Thabo","last":"Motsepe","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Nomsa","last":"Dlamini","title":"COO","dept":"Operations","seniority":"C-Suite","score_base":86},
+  ]},
+
+  # ── E-COMMERCE EXPANSION ─────────────────────────────────────────
+  {"id":"c096","company":"MarketHub FR","domain":"markethub.fr","industry":"ecommerce","country":"FR","city":"Lyon","emp":"200-1000","rev":"$30M-$100M","founded":2014,"funding":"Series C — $60M","growth":"+28% YoY","intent":["digital_transformation","tech_refresh"],"tech":["AWS","Salesforce","Adyen","Stripe"],"contacts":[
+    {"first":"Louis","last":"Dupont","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Camille","last":"Simon","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c097","company":"ClickShop MY","domain":"clickshop.my","industry":"ecommerce","country":"MY","city":"Kuala Lumpur","emp":"200-1000","rev":"$20M-$80M","founded":2015,"funding":"Series B — $32M","growth":"+50% YoY","intent":["series_b_funded","expanding_globally"],"tech":["AWS","Stripe","HubSpot"],"contacts":[
+    {"first":"Lee","last":"Chong Wei","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Aisha","last":"Ibrahim","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c098","company":"TiendaFull CO","domain":"tiendafull.co","industry":"ecommerce","country":"CO","city":"Medellín","emp":"100-400","rev":"$15M-$60M","founded":2016,"funding":"Series A — $18M","growth":"+70% YoY","intent":["series_a_funded","expanding_globally"],"tech":["AWS","Stripe","HubSpot"],"contacts":[
+    {"first":"Juliana","last":"Vargas","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Pablo","last":"Herrera","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c099","company":"MarketPH","domain":"marketph.com.ph","industry":"ecommerce","country":"PH","city":"Quezon City","emp":"200-800","rev":"$20M-$80M","founded":2014,"funding":"Series B — $28M","growth":"+45% YoY","intent":["series_b_funded","digital_transformation"],"tech":["AWS","Stripe","Salesforce"],"contacts":[
+    {"first":"Mark","last":"Reyes","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Ana","last":"Dela Cruz","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c100","company":"BanglaShop BD","domain":"banglashop.com.bd","industry":"ecommerce","country":"BD","city":"Dhaka","emp":"200-1000","rev":"$15M-$60M","founded":2016,"funding":"Series A — $15M","growth":"+95% YoY","intent":["series_a_funded","expanding_globally","hiring_engineers"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Farhan","last":"Ahmed","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Nusrat","last":"Jahan","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+
+  # ── REAL ESTATE EXPANSION ────────────────────────────────────────
+  {"id":"c101","company":"ImmoFr","domain":"immofr.fr","industry":"realestate","country":"FR","city":"Paris","emp":"200-800","rev":"$30M-$100M","founded":2013,"funding":"Series C — $55M","growth":"+32% YoY","intent":["digital_transformation","hiring_sales"],"tech":["AWS","Salesforce","HubSpot"],"contacts":[
+    {"first":"Jean-Paul","last":"Moreau","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Isabelle","last":"Blanc","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+  {"id":"c102","company":"HouseSmart JP","domain":"housesmart.co.jp","industry":"realestate","country":"JP","city":"Tokyo","emp":"500-2000","rev":"$100M-$500M","founded":2010,"funding":"Listed (TSE)","growth":"+15% YoY","intent":["digital_transformation","tech_refresh"],"tech":["AWS","Salesforce","SAP"],"contacts":[
+    {"first":"Takeshi","last":"Nakamura","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":94},
+    {"first":"Yoko","last":"Hayashi","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":86},
+  ]},
+  {"id":"c103","company":"PropertyAE","domain":"propae.ae","industry":"realestate","country":"AE","city":"Abu Dhabi","emp":"100-400","rev":"$30M-$100M","founded":2016,"funding":"Series B — $40M","growth":"+45% YoY","intent":["series_b_funded","expanding_globally"],"tech":["AWS","Salesforce","HubSpot"],"contacts":[
+    {"first":"Sultan","last":"Al-Mansoori","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Mariam","last":"Al-Khoury","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":86},
+  ]},
+
+  # ── LEGAL AI EXPANSION ───────────────────────────────────────────
+  {"id":"c104","company":"LexAI DE","domain":"lexai.de","industry":"legal","country":"DE","city":"Hamburg","emp":"50-200","rev":"$5M-$20M","founded":2020,"funding":"Seed — $8M","growth":"+120% YoY","intent":["hiring_engineers","new_product_launch","series_a_funded"],"tech":["AWS","OpenAI API","HubSpot"],"contacts":[
+    {"first":"Stefan","last":"Hoffmann","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Laura","last":"Richter","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c105","company":"LegalBot IN","domain":"legalbot.in","industry":"legal","country":"IN","city":"Delhi","emp":"50-200","rev":"$3M-$15M","founded":2021,"funding":"Seed — $4M","growth":"+200% YoY","intent":["hiring_engineers","new_product_launch"],"tech":["AWS","OpenAI API","Razorpay"],"contacts":[
+    {"first":"Vikram","last":"Chandra","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Ananya","last":"Bose","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+
+  # ── HK / TW / ASIA ───────────────────────────────────────────────
+  {"id":"c106","company":"FinTech HK","domain":"finhk.com.hk","industry":"fintech","country":"HK","city":"Hong Kong","emp":"100-500","rev":"$20M-$80M","founded":2015,"funding":"Series B — $40M","growth":"+55% YoY","intent":["series_b_funded","expanding_globally","compliance_audit"],"tech":["AWS","Stripe","Salesforce","Bloomberg"],"contacts":[
+    {"first":"Kenneth","last":"Wong","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":94},
+    {"first":"Wendy","last":"Chan","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":89},
+  ]},
+  {"id":"c107","company":"SemiSoft TW","domain":"semisoft.com.tw","industry":"saas","country":"TW","city":"Taipei","emp":"200-1000","rev":"$30M-$100M","founded":2012,"funding":"Listed (TWSE)","growth":"+20% YoY","intent":["tech_refresh","cloud_migration","digital_transformation"],"tech":["AWS","SAP","Oracle"],"contacts":[
+    {"first":"Chang","last":"Chun-Hua","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Wu","last":"Mei-Ling","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c108","company":"GulfSaaS SA","domain":"gulfsaas.sa","industry":"saas","country":"SA","city":"Jeddah","emp":"100-400","rev":"$15M-$60M","founded":2018,"funding":"Series A — $20M","growth":"+85% YoY","intent":["series_a_funded","expanding_globally","digital_transformation"],"tech":["AWS","Salesforce","SAP"],"contacts":[
+    {"first":"Khalid","last":"Al-Qahtani","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Reem","last":"Al-Otaibi","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c109","company":"BalticCode EE","domain":"balticcode.ee","industry":"saas","country":"CZ","city":"Tallinn","emp":"50-200","rev":"$5M-$20M","founded":2019,"funding":"Seed — $5M","growth":"+90% YoY","intent":["series_a_funded","hiring_engineers"],"tech":["AWS","HubSpot","Stripe","Kubernetes"],"contacts":[
+    {"first":"Taavi","last":"Mägi","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Kairi","last":"Tamm","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c110","company":"RecoAI US","domain":"recoai.com","industry":"saas","country":"US","city":"Seattle","emp":"50-200","rev":"$8M-$30M","founded":2020,"funding":"Series A — $15M","growth":"+130% YoY","intent":["series_a_funded","hiring_engineers","new_product_launch"],"tech":["AWS","Snowflake","HubSpot","OpenAI API"],"contacts":[
+    {"first":"Nina","last":"Patel","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Kevin","last":"Zhang","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+    {"first":"Olivia","last":"Moore","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+  {"id":"c111","company":"GrowthHQ UK","domain":"growthhq.co.uk","industry":"saas","country":"GB","city":"Edinburgh","emp":"50-200","rev":"$5M-$20M","founded":2019,"funding":"Seed — $4M","growth":"+110% YoY","intent":["series_a_funded","hiring_sales"],"tech":["AWS","HubSpot","Stripe","Intercom"],"contacts":[
+    {"first":"Callum","last":"MacKenzie","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Fiona","last":"Sinclair","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+  {"id":"c112","company":"AutomateIN","domain":"automatein.in","industry":"saas","country":"IN","city":"Chennai","emp":"100-500","rev":"$10M-$40M","founded":2018,"funding":"Series A — $16M","growth":"+72% YoY","intent":["series_a_funded","hiring_engineers","expanding_globally"],"tech":["AWS","HubSpot","Salesforce","Zapier"],"contacts":[
+    {"first":"Karthik","last":"Rajan","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Deepa","last":"Krishnan","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+    {"first":"Suresh","last":"Natarajan","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":83},
+  ]},
+  {"id":"c113","company":"DataFlow AE","domain":"dataflow.ae","industry":"saas","country":"AE","city":"Dubai","emp":"100-400","rev":"$15M-$60M","founded":2017,"funding":"Series B — $35M","growth":"+65% YoY","intent":["series_b_funded","cloud_migration","digital_transformation"],"tech":["AWS","Snowflake","Salesforce"],"contacts":[
+    {"first":"Faris","last":"Al-Nasser","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Sheikha","last":"Al-Rashid","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+  ]},
+  {"id":"c114","company":"NordCloud SE","domain":"nordcloud.se","industry":"saas","country":"SE","city":"Gothenburg","emp":"100-400","rev":"$20M-$80M","founded":2015,"funding":"Series B — $30M","growth":"+42% YoY","intent":["series_b_funded","cloud_migration","expanding_globally"],"tech":["AWS","Kubernetes","Terraform","Snowflake"],"contacts":[
+    {"first":"Björn","last":"Axelsson","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Maja","last":"Johansson","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c115","company":"DataOps NZ","domain":"dataops.co.nz","industry":"saas","country":"NZ","city":"Auckland","emp":"20-100","rev":"$3M-$15M","founded":2019,"funding":"Seed — $4M","growth":"+95% YoY","intent":["series_a_funded","hiring_engineers"],"tech":["AWS","Snowflake","dbt","HubSpot"],"contacts":[
+    {"first":"Jack","last":"Tanner","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":90},
+    {"first":"Sophie","last":"Walker","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":85},
+  ]},
+  {"id":"c116","company":"GrowthAI JP","domain":"growthai.jp","industry":"saas","country":"JP","city":"Osaka","emp":"50-200","rev":"$8M-$30M","founded":2019,"funding":"Series A — $12M","growth":"+75% YoY","intent":["series_a_funded","hiring_engineers","new_product_launch"],"tech":["AWS","Salesforce","HubSpot","OpenAI API"],"contacts":[
+    {"first":"Ryo","last":"Sato","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Emi","last":"Yoshida","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
+  {"id":"c117","company":"Kloud FR","domain":"kloud.fr","industry":"saas","country":"FR","city":"Bordeaux","emp":"100-400","rev":"$10M-$40M","founded":2016,"funding":"Series A — $15M","growth":"+48% YoY","intent":["series_a_funded","cloud_migration"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Emmanuel","last":"Petit","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":91},
+    {"first":"Mathilde","last":"Leroy","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":86},
+  ]},
+  {"id":"c118","company":"AI Commerce SG","domain":"aicommerce.sg","industry":"ecommerce","country":"SG","city":"Singapore","emp":"100-400","rev":"$15M-$60M","founded":2017,"funding":"Series B — $28M","growth":"+68% YoY","intent":["series_b_funded","expanding_globally","new_product_launch"],"tech":["AWS","Stripe","Salesforce","OpenAI API"],"contacts":[
+    {"first":"Ethan","last":"Ng","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":93},
+    {"first":"Priya","last":"Menon","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":88},
+    {"first":"Daniel","last":"Tay","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":84},
+  ]},
+  {"id":"c119","company":"InsurTech US","domain":"insuretech.io","industry":"fintech","country":"US","city":"Dallas","emp":"200-800","rev":"$40M-$150M","founded":2014,"funding":"Series C — $95M","growth":"+35% YoY","intent":["series_b_funded","acquisitions","hiring_engineers"],"tech":["AWS","Salesforce","Stripe","Snowflake"],"contacts":[
+    {"first":"Brian","last":"Mitchell","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":94},
+    {"first":"Wendy","last":"Scott","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":89},
+    {"first":"Craig","last":"Nelson","title":"VP Sales","dept":"Sales","seniority":"VP","score_base":85},
+  ]},
+  {"id":"c120","company":"LearnFast KR","domain":"learnfast.kr","industry":"education","country":"KR","city":"Busan","emp":"100-400","rev":"$15M-$60M","founded":2018,"funding":"Series B — $32M","growth":"+60% YoY","intent":["series_b_funded","expanding_globally"],"tech":["AWS","HubSpot","Stripe"],"contacts":[
+    {"first":"Kim","last":"Do-Hyun","title":"CEO","dept":"Executive","seniority":"C-Suite","score_base":92},
+    {"first":"Choi","last":"Ji-Young","title":"CTO","dept":"Engineering","seniority":"C-Suite","score_base":87},
+  ]},
 ]
 
 # ═══════════════════════════════════════════════════════════════════
