@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 const SITE_URL = "https://www.nanoneuron.ai";
 
 export default function robots() {
