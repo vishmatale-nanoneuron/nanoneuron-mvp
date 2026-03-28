@@ -828,6 +828,7 @@ function NotesActivityView() {
   var [noteText, setNoteText] = useState("");
   var [noteType, setNoteType] = useState("note");
   var [saving, setSaving] = useState(false);
+  var [msg, setMsg] = useState("");
   var [templates, setTemplates] = useState([]);
   var [tmplName, setTmplName] = useState("");
   var [tmplSubject, setTmplSubject] = useState("");
@@ -855,13 +856,9 @@ function NotesActivityView() {
   async function submitNote() {
     if (!noteText.trim()) return;
     setSaving(true);
-    // Create a note without deal/contact (global activity note hack: use a placeholder saved_lead_id)
-    await apiFetch("/notes/", { method:"POST", body: JSON.stringify({
-      content: noteText, note_type: noteType, saved_lead_id: "00000000-0000-0000-0000-000000000000"
-    })}).catch(() => {});
-    setNoteText("");
+    // Notes require a real deal_id or saved_lead_id — open a deal or contact to log notes there
     setSaving(false);
-    loadActivity();
+    setMsg("📝 To log notes, open a deal from the Pipeline tab or a contact from Contacts.");
   }
 
   async function saveTmpl() {
@@ -921,6 +918,7 @@ function NotesActivityView() {
               marginTop:10, padding:"8px 20px", borderRadius:8, border:"none", cursor:"pointer",
               background: saving ? "rgba(79,142,247,0.4)" : "#4F8EF7", color:"#fff", fontWeight:600, fontSize:13
             }}>{saving ? "Saving..." : "Log Note"}</button>
+            {msg && <div style={{marginTop:10, padding:"8px 12px", borderRadius:8, background:"rgba(79,142,247,0.1)", border:"1px solid rgba(79,142,247,0.2)", fontSize:12, color:"rgba(226,232,240,0.8)"}}>{msg}</div>}
           </div>
 
           {/* Activity feed */}

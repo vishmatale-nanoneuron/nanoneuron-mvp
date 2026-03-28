@@ -29,11 +29,25 @@ class NoteUpdate(BaseModel):
 
 @notes_router.post("/")
 async def create_note(req: NoteCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    if not req.deal_id and not req.saved_lead_id:
-        raise HTTPException(400, "Provide deal_id or saved_lead_id")
+    NIL_UUID = "00000000-0000-0000-0000-000000000000"
+    deal_id = req.deal_id if req.deal_id and req.deal_id != NIL_UUID else None
+    saved_lead_id = req.saved_lead_id if req.saved_lead_id and req.saved_lead_id != NIL_UUID else None
+
+    if not deal_id and not saved_lead_id:
+        raise HTTPException(400, "Provide a valid deal_id or saved_lead_id")
+
+    if deal_id:
+        exists = (await db.execute(select(Deal).where(Deal.id == deal_id, Deal.user_id == user.id))).scalar_one_or_none()
+        if not exists:
+            raise HTTPException(404, "Deal not found")
+    if saved_lead_id:
+        exists = (await db.execute(select(SavedLead).where(SavedLead.id == saved_lead_id, SavedLead.user_id == user.id))).scalar_one_or_none()
+        if not exists:
+            raise HTTPException(404, "Contact not found")
+
     note = Note(
         user_id=user.id, content=req.content, note_type=req.note_type,
-        deal_id=req.deal_id or None, saved_lead_id=req.saved_lead_id or None,
+        deal_id=deal_id, saved_lead_id=saved_lead_id,
     )
     db.add(note)
     await db.commit()

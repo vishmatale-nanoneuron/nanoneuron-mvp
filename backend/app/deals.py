@@ -76,7 +76,7 @@ async def draft_email(req: EmailReq, user: User = Depends(get_current_user)):
             async with httpx.AsyncClient(timeout=30) as client:
                 resp = await client.post("https://api.anthropic.com/v1/messages",
                     headers={"x-api-key": settings.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-                    json={"model": "claude-sonnet-4-20250514", "max_tokens": 500,
+                    json={"model": "claude-sonnet-4-6", "max_tokens": 500,
                         "system": f"Write a {req.language} sales outreach email under 100 words. Professional, specific, personal.",
                         "messages": [{"role": "user", "content": f"Email to {req.contact_name} ({req.contact_title}) at {req.company_name}. Context: {req.context or 'Cold outreach for CRM software'}. From: {user.name}"}]})
                 if resp.status_code == 200:
