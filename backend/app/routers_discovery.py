@@ -4,9 +4,11 @@ Best-in-class B2B lead discovery for 50+ countries
 Intent signals · Tech stack · Funding · Hiring growth
 """
 import random, hashlib
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from app.auth import get_current_user
 from app.models import User
+from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 discovery = APIRouter(prefix="/discovery", tags=["Global Lead Discovery"])
 
@@ -285,54 +287,163 @@ GLOBAL_DB = [
 # ═══════════════════════════════════════════════════════════════════
 # SCORING ENGINE
 # ═══════════════════════════════════════════════════════════════════
-def compute_score(contact: dict, company: dict, boost_intent: list = None) -> int:
+
+# ═══════════════════════════════════════════════════════════════════
+# SCORING ENGINE — Multi-factor, weighted, with full breakdown
+# ═══════════════════════════════════════════════════════════════════
+
+# Intent signal metadata: urgency (1-3), buying_window (days), value_multiplier
+SIGNAL_META = {
+    "series_a_funded":       {"urgency":3,"window":180,"value":1.4,"label":"Series A Funded"},
+    "series_b_funded":       {"urgency":3,"window":120,"value":1.6,"label":"Series B Funded"},
+    "recent_ipo":            {"urgency":3,"window":90, "value":1.5,"label":"Recent IPO"},
+    "acquisitions":          {"urgency":3,"window":90, "value":1.4,"label":"Acquisitions / M&A"},
+    "ciso_hired":            {"urgency":3,"window":90, "value":1.5,"label":"New CISO Hired"},
+    "digital_transformation":{"urgency":2,"window":365,"value":1.3,"label":"Digital Transformation"},
+    "cloud_migration":       {"urgency":2,"window":270,"value":1.3,"label":"Cloud Migration"},
+    "tech_refresh":          {"urgency":2,"window":180,"value":1.2,"label":"Tech Refresh"},
+    "compliance_audit":      {"urgency":3,"window":90, "value":1.3,"label":"Compliance Audit"},
+    "hiring_engineers":      {"urgency":2,"window":180,"value":1.2,"label":"Hiring Engineers"},
+    "hiring_sales":          {"urgency":2,"window":180,"value":1.1,"label":"Hiring Sales"},
+    "expanding_globally":    {"urgency":2,"window":270,"value":1.3,"label":"Expanding Globally"},
+    "new_product_launch":    {"urgency":2,"window":90, "value":1.2,"label":"New Product Launch"},
+    "entering_new_market":   {"urgency":2,"window":180,"value":1.2,"label":"Entering New Market"},
+    "recent_rebrand":        {"urgency":1,"window":180,"value":1.1,"label":"Recent Rebrand"},
+}
+
+SIGNAL_EXPLAIN = {
+    "hiring_engineers":      "Actively scaling engineering — high tech budget right now",
+    "series_a_funded":       "Fresh Series A capital deployed — tools budget is live",
+    "series_b_funded":       "Series B raised — aggressively scaling operations",
+    "expanding_globally":    "Entering new markets — needs global-ready vendors",
+    "new_product_launch":    "Active product launch cycle — buying window is open",
+    "recent_ipo":            "Post-IPO compliance & tooling needs are spiking",
+    "acquisitions":          "M&A integration creates new software requirements",
+    "tech_refresh":          "Legacy replacement underway — open to new vendors",
+    "hiring_sales":          "Growing revenue team — CRM & enablement in demand",
+    "entering_new_market":   "New market entry — compliance and local tools needed",
+    "ciso_hired":            "New CISO = full security stack review within 90 days",
+    "digital_transformation":"Large DX budget — multi-year initiative underway",
+    "cloud_migration":       "Cloud move in progress — security & monitoring needed",
+    "compliance_audit":      "Compliance project active — GRC tools in demand",
+    "recent_rebrand":        "Rebrand signals leadership change — new vendor decisions",
+}
+
+# Revenue string → approximate USD for scoring
+def _parse_rev_usd(rev: str) -> float:
+    if not rev: return 0
+    r = rev.upper().replace("$","").replace(",","").strip()
+    for tag, mult in [("B",1e9),("M",1e6),("K",1e3)]:
+        if tag in r:
+            parts = r.split(tag)[0].strip()
+            if "-" in parts:
+                lo, hi = parts.split("-")
+                try: return (float(lo)+float(hi))/2 * mult
+                except: pass
+            try: return float(parts) * mult
+            except: pass
+    return 0
+
+def _parse_emp(emp: str) -> int:
+    if not emp: return 0
+    parts = emp.replace(",","").replace("+","").strip()
+    if "-" in parts:
+        try:
+            lo, hi = parts.split("-")
+            return (int(lo)+int(hi))//2
+        except: pass
+    try: return int(parts.split()[0])
+    except: return 0
+
+def compute_score_breakdown(contact: dict, company: dict, boost_intent: list = None) -> dict:
+    """Returns score with full component breakdown for transparency."""
+    components = {}
     score = 35
+
+    # Seniority component
     seniority = contact.get("seniority", "")
-    if seniority == "C-Suite": score += 30
-    elif seniority == "VP": score += 22
-    elif seniority == "Director": score += 15
-    elif seniority == "Manager": score += 8
+    seniority_pts = {"C-Suite":30,"VP":22,"Director":15,"Manager":8}.get(seniority, 0)
+    components["seniority"] = {"pts": seniority_pts, "label": seniority or "Unknown"}
+    score += seniority_pts
 
-    emp = company.get("emp", "")
-    if "50000" in emp: score += 18
-    elif "10000" in emp: score += 15
-    elif "5000" in emp: score += 13
-    elif "2000" in emp: score += 11
-    elif "1000" in emp: score += 9
-    elif "500" in emp: score += 7
-    elif "200" in emp: score += 5
-    elif "100" in emp: score += 4
+    # Company size component
+    emp = _parse_emp(company.get("emp",""))
+    if emp >= 50000: emp_pts = 18
+    elif emp >= 10000: emp_pts = 15
+    elif emp >= 5000: emp_pts = 13
+    elif emp >= 2000: emp_pts = 11
+    elif emp >= 1000: emp_pts = 9
+    elif emp >= 500: emp_pts = 7
+    elif emp >= 200: emp_pts = 5
+    elif emp >= 100: emp_pts = 4
+    else: emp_pts = 2
+    components["company_size"] = {"pts": emp_pts, "label": company.get("emp","Unknown")}
+    score += emp_pts
 
-    rev = company.get("rev", "")
-    if "$2B" in rev or "$1B" in rev: score += 10
-    elif "$500M" in rev: score += 8
-    elif "$200M" in rev or "$100M" in rev: score += 6
-    elif "$50M" in rev or "$80M" in rev: score += 4
-    elif "$20M" in rev or "$30M" in rev: score += 2
+    # Revenue component
+    rev_usd = _parse_rev_usd(company.get("rev",""))
+    if rev_usd >= 2e9: rev_pts = 10
+    elif rev_usd >= 1e9: rev_pts = 10
+    elif rev_usd >= 500e6: rev_pts = 8
+    elif rev_usd >= 200e6: rev_pts = 6
+    elif rev_usd >= 100e6: rev_pts = 6
+    elif rev_usd >= 50e6: rev_pts = 4
+    elif rev_usd >= 20e6: rev_pts = 2
+    else: rev_pts = 1
+    components["revenue"] = {"pts": rev_pts, "label": company.get("rev","Unknown")}
+    score += rev_pts
 
+    # Intent signals component
     intents = company.get("intent", [])
-    high_value = ["series_b_funded", "series_a_funded", "recent_ipo", "acquisitions", "ciso_hired",
-                  "cloud_migration", "digital_transformation", "tech_refresh", "compliance_audit"]
-    intent_hits = sum(1 for i in intents if i in high_value)
-    score += min(10, intent_hits * 3)
+    high_value = ["series_b_funded","series_a_funded","recent_ipo","acquisitions","ciso_hired",
+                  "cloud_migration","digital_transformation","tech_refresh","compliance_audit"]
+    intent_hits = [i for i in intents if i in high_value]
+    intent_pts = min(10, len(intent_hits) * 3)
+    components["intent_signals"] = {"pts": intent_pts, "label": f"{len(intent_hits)} high-value signals: {', '.join(intent_hits[:2]) or 'none'}"}
+    score += intent_pts
 
+    # Boost intent bonus (user searched for specific signal)
+    boost_pts = 0
     if boost_intent:
-        score += sum(3 for bi in boost_intent if bi in intents)
+        boost_pts = min(9, sum(3 for bi in boost_intent if bi in intents))
+        score += boost_pts
+    if boost_pts: components["filter_match"] = {"pts": boost_pts, "label": "Matches your intent filter"}
 
-    dept = contact.get("dept", "")
-    if dept in ("Executive", "Security", "Compliance", "Finance"): score += 5
-    elif dept in ("Sales", "Product"): score += 3
+    # Department component
+    dept = contact.get("dept","")
+    dept_pts = {"Executive":5,"Security":5,"Compliance":5,"Finance":5,"Sales":3,"Product":3}.get(dept, 0)
+    components["department"] = {"pts": dept_pts, "label": dept or "Unknown"}
+    score += dept_pts
 
+    # Base score from data quality
     score_base = contact.get("score_base", 70)
-    score = int((score * 0.6) + (score_base * 0.4))
-    return min(99, max(30, score))
+    final = int((score * 0.6) + (score_base * 0.4))
+    final = min(99, max(30, final))
 
+    # Max possible for percentage display
+    max_pts = 35 + 30 + 18 + 10 + 10 + 9 + 5  # 117
+    components["total_raw"] = {"pts": score, "label": f"Raw score (blended with base {score_base})"}
+
+    return {
+        "score": final,
+        "score_label": "HOT" if final >= 80 else "WARM" if final >= 60 else "COLD",
+        "components": components,
+        "urgency": max((SIGNAL_META.get(i,{}).get("urgency",1) for i in intents), default=1),
+        "buying_window_days": min((SIGNAL_META.get(i,{}).get("window",365) for i in intents), default=365),
+    }
+
+def compute_score(contact: dict, company: dict, boost_intent: list = None) -> int:
+    return compute_score_breakdown(contact, company, boost_intent)["score"]
 
 def mask_email(email: str) -> str:
     p = email.split("@")
     if len(p) != 2: return "***@***.com"
-    return p[0][0] + "***" + "@" + p[1]
+    user = p[0]
+    masked = user[0] + ("*" * min(len(user)-1, 4)) if len(user) > 1 else "***"
+    return masked + "@" + p[1]
 
+def reveal_email(first: str, last: str, domain: str) -> str:
+    return f"{first.lower()}.{last.lower()}@{domain}"
 
 def get_potential_inr(country: str, score: int) -> int:
     base = {
@@ -343,256 +454,809 @@ def get_potential_inr(country: str, score: int) -> int:
         "ZA":22000,"NG":16000,"KE":14000,"EG":15000,"SA":32000,"TR":18000,
         "ID":18000,"PH":16000,"VN":15000,"TH":17000,"MY":20000,"PK":14000,"BD":13000,
         "PL":24000,"CZ":26000,"HU":22000,"RO":20000,"UA":18000,"GR":24000,"PT":26000,
-        "RU":20000,"IT":35000,"ES":32000,"AT":38000,
+        "RU":20000,"IT":35000,"ES":32000,
     }.get(country, 20000)
     if score >= 90: return int(base * 1.6)
     if score >= 80: return int(base * 1.35)
     if score >= 70: return int(base * 1.15)
     return base
 
+def _build_contact(c: dict, comp: dict, boost_intent: list = None) -> dict:
+    bd = compute_score_breakdown(c, comp, boost_intent)
+    return {
+        "name": c["first"] + " " + c["last"],
+        "first": c["first"], "last": c["last"],
+        "title": c["title"], "dept": c["dept"],
+        "seniority": c["seniority"],
+        "email_masked": mask_email(c["first"].lower()+"."+c["last"].lower()+"@"+comp["domain"]),
+        "score": bd["score"],
+        "score_label": bd["score_label"],
+        "score_breakdown": bd["components"],
+        "urgency": bd["urgency"],
+        "buying_window_days": bd["buying_window_days"],
+        "potential_inr": get_potential_inr(comp["country"], bd["score"]),
+    }
+
+def _build_company_row(comp: dict, contacts: list, with_breakdown: bool = False) -> dict:
+    country_meta = COUNTRIES.get(comp["country"], {})
+    top = contacts[0] if contacts else {}
+    # Intent urgency — highest urgency signal wins
+    max_urgency = max((SIGNAL_META.get(s,{}).get("urgency",1) for s in comp.get("intent",[])), default=1)
+    min_window = min((SIGNAL_META.get(s,{}).get("window",365) for s in comp.get("intent",[])), default=365)
+    return {
+        "id": comp["id"],
+        "company": comp["company"],
+        "domain": comp["domain"],
+        "industry": comp["industry"],
+        "country": comp["country"],
+        "country_name": country_meta.get("name", comp["country"]),
+        "flag": country_meta.get("flag", ""),
+        "city": comp["city"],
+        "employees": comp["emp"],
+        "revenue": comp["rev"],
+        "founded": comp.get("founded"),
+        "funding": comp.get("funding",""),
+        "growth": comp.get("growth",""),
+        "intent": comp.get("intent",[]),
+        "tech": comp.get("tech",[]),
+        "compliance": country_meta.get("compliance",""),
+        "compliance_risk": country_meta.get("risk","medium"),
+        "business_culture": country_meta.get("business",""),
+        "contacts": contacts if with_breakdown else [{k:v for k,v in c.items() if k!="score_breakdown"} for c in contacts],
+        "contact_count": len(contacts),
+        "top_score": top.get("score",0) if top else 0,
+        "total_potential_inr": sum(c["potential_inr"] for c in contacts),
+        "urgency": max_urgency,
+        "buying_window_days": min_window,
+    }
+
+# ─── Pre-computed indexes for O(1) lookups ────────────────────────
+_ID_INDEX: dict = {}
+
+def _rebuild_index():
+    global _ID_INDEX
+    _ID_INDEX = {c["id"]: c for c in GLOBAL_DB}
+
+_rebuild_index()
+
+# ─── Per-user in-memory stores (resets on redeploy — MVP) ─────────
+# For production: move to Redis or Postgres JSONB
+from collections import OrderedDict
+_WATCHLISTS: dict = {}   # user_id_str → set of company_ids
+_RECENT: dict = {}       # user_id_str → list of company_ids (last 20, ordered)
+_SAVED_SEARCHES: dict = {} # user_id_str → list of {id, name, filters, created_at}
+import uuid as _uuid_mod
+import time as _time_mod
+
+def _wl(user_id) -> set:
+    k = str(user_id)
+    if k not in _WATCHLISTS: _WATCHLISTS[k] = set()
+    return _WATCHLISTS[k]
+
+def _recent(user_id) -> list:
+    k = str(user_id)
+    if k not in _RECENT: _RECENT[k] = []
+    return _RECENT[k]
+
+def _record_view(user_id, company_id: str):
+    lst = _recent(user_id)
+    if company_id in lst: lst.remove(company_id)
+    lst.insert(0, company_id)
+    _RECENT[str(user_id)] = lst[:20]
+
+def _ss(user_id) -> list:
+    k = str(user_id)
+    if k not in _SAVED_SEARCHES: _SAVED_SEARCHES[k] = []
+    return _SAVED_SEARCHES[k]
+
+# ─── Email template engine ────────────────────────────────────────
+_EMAIL_HOOKS = {
+    "series_a_funded":       "Congratulations on your Series A — it's clear {company} is entering a new phase of growth.",
+    "series_b_funded":       "Your Series B shows {company} is in serious scale mode — exactly when the right vendors create compounding value.",
+    "recent_ipo":            "The IPO puts {company} on a new playing field with elevated compliance, reporting, and tooling expectations.",
+    "hiring_engineers":      "I noticed {company} is actively scaling its engineering org — a clear signal of platform investment.",
+    "hiring_sales":          "With {company} building out its revenue team, the CRM and enablement stack becomes mission-critical.",
+    "expanding_globally":    "Expanding into new markets is exciting — and the vendors that support you globally make all the difference.",
+    "new_product_launch":    "Launching a new product is a pivotal window. The right tooling can dramatically accelerate go-to-market speed.",
+    "acquisitions":          "Post-acquisition integration is notoriously complex — and one of the highest-ROI moments for the right software investment.",
+    "tech_refresh":          "Replacing legacy systems is a rare window. Getting vendor selection right here compounds for years.",
+    "ciso_hired":            "A new CISO typically triggers a full security stack review within 90 days — perfect timing for a conversation.",
+    "digital_transformation":"DX initiatives tend to be multi-year, multi-million programs. The right vendor partnerships define outcomes.",
+    "cloud_migration":       "Cloud migrations are where architecture decisions become irreversible. We help teams get this right the first time.",
+    "compliance_audit":      "Compliance audits create urgent, well-scoped needs — our platform was built exactly for this moment.",
+    "entering_new_market":   "New market entry brings regulatory and data complexity most teams underestimate. Happy to share what we've seen.",
+    "recent_rebrand":        "A rebrand is often the right moment to re-evaluate the entire vendor stack — new direction, new requirements.",
+}
+_FORMAL_COUNTRIES = {"DE","JP","KR","FR","IT","ES","PL","HU","CZ","RO","TR","BR","MX","EG","SA","AE","NG"}
+
+def generate_email(comp: dict, contact: dict, sender_name: str = "[Your Name]", sender_company: str = "Nanoneuron") -> dict:
+    signals = comp.get("intent", [])
+    country_meta = COUNTRIES.get(comp.get("country",""), {})
+    is_formal = comp.get("country","") in _FORMAL_COUNTRIES or "formal" in country_meta.get("business","").lower()
+    first = contact.get("first") or contact.get("name","").split()[0] or "there"
+    full_name = contact.get("name") or f"{contact.get('first','')} {contact.get('last','')}".strip()
+    title = contact.get("title","")
+    industry = comp.get("industry","")
+    growth = comp.get("growth","")
+    funding = comp.get("funding","").split("—")[0].strip() if comp.get("funding") else ""
+    tech_snippet = ", ".join((comp.get("tech") or [])[:2])
+
+    hook = next((_EMAIL_HOOKS[s].format(company=comp["company"]) for s in signals if s in _EMAIL_HOOKS),
+                f"I've been following {comp['company']}'s growth and wanted to reach out at the right moment.")
+
+    top_signals = " and ".join(s.replace("_"," ") for s in signals[:2]) if signals else "your growth trajectory"
+
+    subject_variants = [
+        f"{comp['company']} × {sender_company} — quick question about {signals[0].replace('_',' ') if signals else 'growth'}",
+        f"Re: {signals[0].replace('_',' ').title() if signals else 'growth'} at {comp['company']}",
+        f"{comp['company']} — 20 min this week?",
+    ]
+
+    greeting = f"Dear {full_name}," if is_formal else f"Hi {first},"
+    close = "Yours sincerely," if is_formal else "Best,"
+
+    body = f"""{greeting}
+
+{hook}
+
+As {title} at {comp['company']}, you're navigating {top_signals} — precisely where {sender_company} creates measurable impact for {industry} companies.
+
+We help teams like yours [insert your specific value prop here] so that [insert outcome]. Three {industry} companies in your space saw [result] within 90 days.
+
+{f"Your {funding} and {growth} growth are signals we see just before the fastest-moving companies pull ahead of the pack." if funding and growth else f"With {growth} growth, {comp['company']} is clearly in an important phase." if growth else ""}
+
+Worth a 20-minute call this week? I can show you exactly how this applies to {comp['company']}'s current situation.
+
+{close}
+{sender_name}
+{sender_company}
+[Your phone / Cal link]
+
+---
+P.S. I noticed you're using {tech_snippet or "modern infrastructure"} — we integrate natively, zero migration overhead."""
+
+    return {
+        "subject": subject_variants[0],
+        "subject_variants": subject_variants,
+        "body": body.strip(),
+        "tone": "formal" if is_formal else "casual",
+        "signals_used": signals[:3],
+        "company": comp["company"],
+        "contact_name": full_name,
+        "contact_title": title,
+    }
+
+# ═══════════════════════════════════════════════════════════════════
+# PYDANTIC MODELS
+# ═══════════════════════════════════════════════════════════════════
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+
+class SavedSearchCreate(BaseModel):
+    name: str
+    filters: dict
+
+class GenerateEmailRequest(BaseModel):
+    company_id: str
+    contact_index: int = 0
+    sender_name: str = "[Your Name]"
+    sender_company: str = "Nanoneuron"
+
+class BulkPipelineRequest(BaseModel):
+    company_ids: List[str]
+
+# ═══════════════════════════════════════════════════════════════════
+# SHARED FILTER LOGIC
+# ═══════════════════════════════════════════════════════════════════
+def _apply_filters(
+    industry=None, country=None, intent=None, seniority=None, dept=None,
+    min_score=0, funding=None, tech=None, q=None,
+    employee_min=None, employee_max=None, founded_after=None, growth_tier=None
+):
+    """Returns (results, summary) applying all filters."""
+    funding_map = {"seed":"Seed","series_a":"Series A","series_b":"Series B","series_c":"Series C","ipo":"IPO","pe":"PE"}
+    funding_kw = funding_map.get(funding, "") if funding else ""
+    intent_filters = [i.strip() for i in intent.split(",")] if intent else []
+    industries = [i.strip().lower() for i in industry.split(",")] if industry else []
+    countries = [c.strip().upper() for c in country.split(",")] if country else []
+
+    results = []
+    for comp in GLOBAL_DB:
+        if industries and comp["industry"] not in industries: continue
+        if countries and comp["country"].upper() not in countries: continue
+        if funding_kw and funding_kw.lower() not in comp.get("funding","").lower(): continue
+        if tech:
+            tech_terms = [t.strip().lower() for t in tech.split(",")]
+            comp_tech = " ".join(comp.get("tech",[])).lower()
+            if not any(t in comp_tech for t in tech_terms): continue
+        if q:
+            ql = q.lower()
+            searchable = " ".join([
+                comp.get("company",""), comp.get("city",""), comp.get("industry",""),
+                comp.get("country",""), comp.get("domain",""),
+                " ".join(comp.get("tech",[])),
+                " ".join(c["first"]+" "+c["last"] for c in comp.get("contacts",[])),
+            ]).lower()
+            if not any(word in searchable for word in ql.split()): continue
+        if intent_filters and not any(i in comp.get("intent",[]) for i in intent_filters): continue
+        if employee_min or employee_max:
+            emp = _parse_emp(comp.get("emp",""))
+            if employee_min and emp < employee_min: continue
+            if employee_max and emp > employee_max: continue
+        if founded_after and comp.get("founded"):
+            try:
+                if int(comp["founded"]) < founded_after: continue
+            except: pass
+        if growth_tier:
+            g = comp.get("growth","").upper()
+            if growth_tier == "high" and not any(x in g for x in ["+30","+40","+50","+60","+70","+80","+90","+100"]): continue
+            if growth_tier == "medium" and not any(x in g for x in ["+10","+15","+20","+25"]): continue
+            if growth_tier == "low" and "+" not in g: continue
+
+        filtered_contacts = []
+        for c in comp["contacts"]:
+            if seniority:
+                seniorities = [s.strip() for s in seniority.split(",")]
+                if c.get("seniority","") not in seniorities: continue
+            if dept and c.get("dept","").lower() != dept.lower(): continue
+            sc = compute_score(c, comp, intent_filters)
+            if sc < min_score: continue
+            filtered_contacts.append(_build_contact(c, comp, intent_filters))
+
+        if not filtered_contacts: continue
+        filtered_contacts.sort(key=lambda x: x["score"], reverse=True)
+        results.append(_build_company_row(comp, filtered_contacts))
+
+    return results
 
 # ═══════════════════════════════════════════════════════════════════
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════
 
-@discovery.get("/leads")
+# ─── 1. Lead Discovery (main search) ──────────────────────────────
+@discovery.get("/leads", summary="Search & filter leads — the core discovery endpoint")
 async def discover_global_leads(
-    industry: str = Query(None, description="saas|fintech|ecommerce|healthcare|cybersecurity|manufacturing|legal|realestate|logistics|education"),
-    country: str = Query(None, description="Country code e.g. US, IN, DE"),
-    intent: str = Query(None, description="Comma-separated intent signals"),
-    seniority: str = Query(None, description="C-Suite|VP|Director|Manager"),
-    dept: str = Query(None, description="Engineering|Sales|Executive|Finance|Security|Product"),
-    min_score: int = Query(0, description="Minimum lead score 0-99"),
-    funding: str = Query(None, description="seed|series_a|series_b|series_c|ipo|pe"),
-    tech: str = Query(None, description="Tech in stack e.g. Salesforce"),
-    q: str = Query(None, description="Free text search (company, title, city)"),
-    limit: int = Query(50, le=200),
+    industry: str = Query(None, description="Comma-sep: saas,fintech,healthcare…"),
+    country: str = Query(None, description="Comma-sep: US,IN,DE…"),
+    intent: str = Query(None, description="Comma-sep intent signals"),
+    seniority: str = Query(None, description="C-Suite|VP|Director (comma-sep ok)"),
+    dept: str = Query(None, description="Engineering|Sales|Executive|Finance|Security"),
+    min_score: int = Query(0, ge=0, le=99, description="Min lead score"),
+    funding: str = Query(None, description="seed|series_a|series_b|ipo|pe"),
+    tech: str = Query(None, description="Comma-sep tech: Salesforce,AWS…"),
+    q: str = Query(None, description="Free text (company, city, contact, tech)"),
+    employee_min: int = Query(None, description="Min employees"),
+    employee_max: int = Query(None, description="Max employees"),
+    founded_after: int = Query(None, description="Founded year ≥ this"),
+    growth_tier: str = Query(None, description="high(>30%)|medium(10-30%)|low"),
+    sort_by: str = Query("score", description="score|potential|revenue|employees|urgency"),
+    sort_dir: str = Query("desc", description="asc|desc"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Results per page"),
+    include_breakdown: bool = Query(False, description="Include score breakdown components"),
     user: User = Depends(get_current_user),
 ):
-    intent_filters = [i.strip() for i in intent.split(",")] if intent else []
-    funding_map = {"seed":"Seed","series_a":"Series A","series_b":"Series B","series_c":"Series C","ipo":"IPO","pe":"PE"}
-    funding_kw = funding_map.get(funding, "") if funding else ""
+    results = _apply_filters(industry, country, intent, seniority, dept, min_score,
+                             funding, tech, q, employee_min, employee_max, founded_after, growth_tier)
 
-    results = []
-    for comp in GLOBAL_DB:
-        if industry and comp["industry"] != industry.lower(): continue
-        if country and comp["country"].upper() != country.upper(): continue
-        if funding_kw and funding_kw not in comp.get("funding", ""): continue
-        if tech and tech.lower() not in " ".join(comp.get("tech", [])).lower(): continue
-        if q:
-            ql = q.lower()
-            if not any(ql in str(comp.get(f, "")).lower() for f in ["company","city","industry","country"]): continue
-        if intent_filters and not any(i in comp.get("intent",[]) for i in intent_filters): continue
+    # Sort
+    if sort_by == "potential": results.sort(key=lambda x: x["total_potential_inr"], reverse=(sort_dir=="desc"))
+    elif sort_by == "revenue": results.sort(key=lambda x: _parse_rev_usd(x["revenue"]), reverse=(sort_dir=="desc"))
+    elif sort_by == "employees": results.sort(key=lambda x: _parse_emp(x["employees"]), reverse=(sort_dir=="desc"))
+    elif sort_by == "urgency": results.sort(key=lambda x: x["urgency"], reverse=(sort_dir=="desc"))
+    else: results.sort(key=lambda x: x["top_score"], reverse=(sort_dir=="desc"))
 
-        filtered_contacts = []
-        for c in comp["contacts"]:
-            if seniority and c.get("seniority","") != seniority: continue
-            if dept and c.get("dept","").lower() != dept.lower(): continue
-            sc = compute_score(c, comp, intent_filters)
-            if sc < min_score: continue
-            filtered_contacts.append({
-                "name": c["first"] + " " + c["last"],
-                "first": c["first"], "last": c["last"],
-                "title": c["title"], "dept": c["dept"],
-                "seniority": c["seniority"],
-                "email_masked": mask_email(c["first"].lower() + "." + c["last"].lower() + "@" + comp["domain"]),
-                "score": sc,
-                "score_label": "HOT" if sc >= 80 else "WARM" if sc >= 60 else "COLD",
-                "potential_inr": get_potential_inr(comp["country"], sc),
-            })
+    total = len(results)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    offset = (page - 1) * per_page
+    page_data = results[offset:offset+per_page]
 
-        if not filtered_contacts: continue
-        filtered_contacts.sort(key=lambda x: x["score"], reverse=True)
+    if not include_breakdown:
+        for r in page_data:
+            for c in r.get("contacts",[]):
+                c.pop("score_breakdown", None)
 
-        country_meta = COUNTRIES.get(comp["country"], {})
-        results.append({
-            "id": comp["id"],
-            "company": comp["company"], "domain": comp["domain"],
-            "industry": comp["industry"], "country": comp["country"],
-            "country_name": country_meta.get("name", comp["country"]),
-            "flag": country_meta.get("flag", ""),
-            "city": comp["city"], "employees": comp["emp"], "revenue": comp["rev"],
-            "founded": comp.get("founded"), "funding": comp.get("funding",""),
-            "growth": comp.get("growth",""),
-            "intent": comp.get("intent",[]), "tech": comp.get("tech",[]),
-            "compliance": country_meta.get("compliance",""),
-            "compliance_risk": country_meta.get("risk","medium"),
-            "business_culture": country_meta.get("business",""),
-            "contacts": filtered_contacts,
-            "contact_count": len(filtered_contacts),
-            "top_score": filtered_contacts[0]["score"] if filtered_contacts else 0,
-            "total_potential_inr": sum(c["potential_inr"] for c in filtered_contacts),
-        })
-
-    results.sort(key=lambda x: x["top_score"], reverse=True)
+    hot = [r for r in results if r["top_score"] >= 80]
     return {
-        "success": True, "total": len(results), "credits": user.credits,
-        "data": results[:limit],
+        "success": True,
+        "credits": user.credits,
+        "pagination": {"page": page, "per_page": per_page, "total": total,
+                       "total_pages": total_pages, "has_next": page < total_pages,
+                       "has_prev": page > 1},
+        "data": page_data,
+        "total": total,
         "summary": {
             "countries": len(set(r["country"] for r in results)),
             "industries": len(set(r["industry"] for r in results)),
-            "contacts": sum(r["contact_count"] for r in results[:limit]),
-            "hot_leads": sum(1 for r in results[:limit] for c in r["contacts"] if c["score_label"]=="HOT"),
-            "total_potential_inr": sum(r["total_potential_inr"] for r in results[:limit]),
+            "contacts": sum(r["contact_count"] for r in page_data),
+            "hot_leads": sum(1 for r in page_data for c in r["contacts"] if c.get("score_label")=="HOT"),
+            "hot_companies": len([r for r in page_data if r["top_score"]>=80]),
+            "total_potential_inr": sum(r["total_potential_inr"] for r in page_data),
+            "avg_score": round(sum(r["top_score"] for r in page_data)/len(page_data),1) if page_data else 0,
+            "top_intent": _top_intent(results),
         }
     }
 
+def _top_intent(results):
+    counts = {}
+    for r in results:
+        for s in r.get("intent",[]): counts[s] = counts.get(s,0) + 1
+    return sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
 
-@discovery.get("/countries")
+# ─── 2. Hot Leads shortcut ────────────────────────────────────────
+@discovery.get("/hot-leads", summary="Pre-computed top 25 hottest leads globally")
+async def hot_leads(
+    industry: str = Query(None),
+    country: str = Query(None),
+    limit: int = Query(25, le=50),
+    user: User = Depends(get_current_user),
+):
+    results = _apply_filters(industry=industry, country=country, min_score=75)
+    results.sort(key=lambda x: (x["urgency"], x["top_score"]), reverse=True)
+    hot = results[:limit]
+    return {
+        "success": True,
+        "count": len(hot),
+        "data": hot,
+        "message": f"Top {len(hot)} highest-urgency leads right now",
+    }
+
+# ─── 3. Autocomplete / Suggest ────────────────────────────────────
+@discovery.get("/suggest", summary="Autocomplete for search bar")
+async def suggest(
+    q: str = Query(..., min_length=2, description="Partial query"),
+    user: User = Depends(get_current_user),
+):
+    ql = q.lower().strip()
+    companies, cities, techs, signals = [], [], set(), set()
+
+    for comp in GLOBAL_DB:
+        if ql in comp["company"].lower() and len(companies) < 6:
+            companies.append({"type":"company","value":comp["company"],"sub":f"{comp['city']} · {comp['industry']}","id":comp["id"]})
+        if ql in comp["city"].lower(): cities.add(comp["city"])
+        for t in comp.get("tech",[]):
+            if ql in t.lower(): techs.add(t)
+        for s in comp.get("intent",[]):
+            if ql in s.replace("_"," "):
+                signals.add(s)
+
+    suggestions = companies + \
+        [{"type":"city","value":c,"sub":"Filter by city"} for c in list(cities)[:3]] + \
+        [{"type":"tech","value":t,"sub":"Filter by tech stack"} for t in list(techs)[:3]] + \
+        [{"type":"signal","value":s.replace("_"," ").title(),"sub":"Intent signal","raw":s} for s in list(signals)[:3]]
+
+    return {"success": True, "query": q, "suggestions": suggestions[:12]}
+
+# ─── 4. Company Detail (full profile + intelligence) ──────────────
+@discovery.get("/company/{company_id}", summary="Full company profile with intelligence layer")
+async def get_company_detail(
+    company_id: str,
+    user: User = Depends(get_current_user),
+):
+    comp = _ID_INDEX.get(company_id)
+    if not comp:
+        from fastapi import HTTPException
+        raise HTTPException(404, f"Company '{company_id}' not found")
+
+    _record_view(user.id, company_id)
+
+    country_meta = COUNTRIES.get(comp["country"], {})
+    contacts = [_build_contact(c, comp) for c in comp["contacts"]]
+    contacts.sort(key=lambda x: x["score"], reverse=True)
+
+    funding = comp.get("funding","")
+    growth = comp.get("growth","")
+    signals = comp.get("intent",[])
+
+    # Build pitch angle based on top signals + company data
+    pitch_parts = []
+    if "series_b_funded" in signals or "series_a_funded" in signals:
+        pitch_parts.append(f"fresh capital from {funding.split('—')[0].strip()}")
+    if growth: pitch_parts.append(f"{growth} growth")
+    if "hiring_engineers" in signals or "hiring_sales" in signals:
+        pitch_parts.append("active hiring")
+    if "expanding_globally" in signals:
+        pitch_parts.append("global expansion")
+
+    pitch = f"With {', '.join(pitch_parts)}, {comp['company']} is in a high-velocity phase — decision-makers are actively evaluating vendors right now." if pitch_parts \
+        else f"{comp['company']} shows {len(signals)} active buying signals — a strong indication of an open evaluation window."
+
+    # Similar companies (same industry, scored by signal overlap)
+    similar_ids = [
+        c["id"] for c in GLOBAL_DB
+        if c["id"] != comp["id"] and c["industry"] == comp["industry"]
+        and len(set(c.get("intent",[])) & set(signals)) >= 1
+    ][:4]
+
+    return {
+        "success": True,
+        "company": {
+            **{k: v for k, v in comp.items() if k != "contacts"},
+            "contacts": contacts,
+            "country_meta": country_meta,
+            "total_potential_inr": sum(c["potential_inr"] for c in contacts),
+            "top_score": contacts[0]["score"] if contacts else 0,
+            "urgency": max((SIGNAL_META.get(s,{}).get("urgency",1) for s in signals), default=1),
+            "buying_window_days": min((SIGNAL_META.get(s,{}).get("window",365) for s in signals), default=365),
+            "intelligence": {
+                "why_now": [s.replace("_"," ").title() for s in signals],
+                "why_now_detail": [{"signal":s, "label":s.replace("_"," ").title(),
+                    "reason":SIGNAL_EXPLAIN.get(s,""), "urgency":SIGNAL_META.get(s,{}).get("urgency",1),
+                    "window_days":SIGNAL_META.get(s,{}).get("window",365)} for s in signals],
+                "pitch_angle": pitch,
+                "tech_overlap": comp.get("tech",[]),
+                "outreach_tip": country_meta.get("business","Direct, professional communication recommended."),
+                "compliance_note": country_meta.get("compliance","Ensure data compliance before outreach."),
+                "compliance_risk": country_meta.get("risk","medium"),
+                "similar_company_ids": similar_ids,
+                "email_templates_available": len(signals),
+            }
+        }
+    }
+
+# ─── 5. Score Breakdown per company ──────────────────────────────
+@discovery.get("/company/{company_id}/score-breakdown", summary="Detailed score explanation for each contact")
+async def score_breakdown(company_id: str, user: User = Depends(get_current_user)):
+    comp = _ID_INDEX.get(company_id)
+    if not comp:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    breakdowns = []
+    for c in comp["contacts"]:
+        bd = compute_score_breakdown(c, comp)
+        breakdowns.append({
+            "contact": c["first"]+" "+c["last"],
+            "title": c["title"],
+            "score": bd["score"],
+            "label": bd["score_label"],
+            "components": bd["components"],
+            "urgency": bd["urgency"],
+            "buying_window_days": bd["buying_window_days"],
+            "explanation": f"Score {bd['score']} = seniority ({bd['components'].get('seniority',{}).get('pts',0)}pts) + company size ({bd['components'].get('company_size',{}).get('pts',0)}pts) + revenue ({bd['components'].get('revenue',{}).get('pts',0)}pts) + intent signals ({bd['components'].get('intent_signals',{}).get('pts',0)}pts) + dept ({bd['components'].get('department',{}).get('pts',0)}pts)"
+        })
+    return {"success": True, "company": comp["company"], "breakdowns": breakdowns}
+
+# ─── 6. Similar Companies ─────────────────────────────────────────
+@discovery.get("/company/{company_id}/similar", summary="5 companies with similar profile & signals")
+async def similar_companies(company_id: str, user: User = Depends(get_current_user)):
+    comp = _ID_INDEX.get(company_id)
+    if not comp:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    signals = set(comp.get("intent",[]))
+    industry = comp["industry"]
+    country = comp["country"]
+
+    scored = []
+    for c in GLOBAL_DB:
+        if c["id"] == company_id: continue
+        overlap = len(set(c.get("intent",[])) & signals)
+        same_ind = int(c["industry"] == industry) * 3
+        same_country = int(c["country"] == country) * 2
+        similarity = overlap + same_ind + same_country
+        if similarity >= 2:
+            cts = [_build_contact(ct, c) for ct in c["contacts"]]
+            cts.sort(key=lambda x: x["score"], reverse=True)
+            scored.append((_build_company_row(c, cts), similarity))
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return {"success": True, "company": comp["company"], "similar": [r for r,_ in scored[:5]]}
+
+# ─── 7. Email Generator ───────────────────────────────────────────
+@discovery.post("/generate-email", summary="Generate personalized cold email for a contact")
+async def generate_email_endpoint(
+    req: GenerateEmailRequest,
+    user: User = Depends(get_current_user),
+):
+    comp = _ID_INDEX.get(req.company_id)
+    if not comp:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    contacts = comp.get("contacts",[])
+    if not contacts:
+        from fastapi import HTTPException
+        raise HTTPException(400, "No contacts for this company")
+    idx = min(req.contact_index, len(contacts)-1)
+    contact = contacts[idx]
+    email_data = generate_email(comp, contact, req.sender_name, req.sender_company)
+    return {"success": True, **email_data}
+
+# ─── 8. Quick Pipeline Add ────────────────────────────────────────
+@discovery.post("/company/{company_id}/pipeline", summary="Add primary contact to pipeline instantly")
+async def quick_pipeline(
+    company_id: str,
+    user: User = Depends(get_current_user),
+):
+    comp = _ID_INDEX.get(company_id)
+    if not comp:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    primary = comp["contacts"][0] if comp.get("contacts") else None
+    if not primary:
+        from fastapi import HTTPException
+        raise HTTPException(400, "No contacts available")
+    sc = compute_score(primary, comp)
+    return {
+        "success": True,
+        "message": f"{primary['first']} {primary['last']} ({primary['title']}) at {comp['company']} ready to add to pipeline",
+        "contact": {
+            "name": primary["first"]+" "+primary["last"],
+            "title": primary["title"],
+            "email": mask_email(primary["first"].lower()+"."+primary["last"].lower()+"@"+comp["domain"]),
+            "company": comp["company"],
+            "company_domain": comp["domain"],
+            "country": comp["country"],
+            "score": sc,
+        },
+        "next_step": "POST /api/search/add-to-pipeline with the contact data above"
+    }
+
+# ─── 9. Watchlist ─────────────────────────────────────────────────
+@discovery.get("/watchlist", summary="Get user's saved/bookmarked companies")
+async def get_watchlist(user: User = Depends(get_current_user)):
+    wl = _wl(user.id)
+    companies = []
+    for cid in wl:
+        comp = _ID_INDEX.get(cid)
+        if comp:
+            cts = [_build_contact(c, comp) for c in comp["contacts"]]
+            cts.sort(key=lambda x: x["score"], reverse=True)
+            companies.append(_build_company_row(comp, cts))
+    companies.sort(key=lambda x: x["top_score"], reverse=True)
+    return {"success": True, "count": len(companies), "companies": companies}
+
+@discovery.post("/watchlist/{company_id}", summary="Save company to watchlist")
+async def add_watchlist(company_id: str, user: User = Depends(get_current_user)):
+    if company_id not in _ID_INDEX:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    _wl(user.id).add(company_id)
+    comp = _ID_INDEX[company_id]
+    return {"success": True, "message": f"{comp['company']} added to watchlist", "watchlist_size": len(_wl(user.id))}
+
+@discovery.delete("/watchlist/{company_id}", summary="Remove from watchlist")
+async def remove_watchlist(company_id: str, user: User = Depends(get_current_user)):
+    _wl(user.id).discard(company_id)
+    return {"success": True, "message": "Removed from watchlist", "watchlist_size": len(_wl(user.id))}
+
+# ─── 10. Recent Views ─────────────────────────────────────────────
+@discovery.get("/recent", summary="Recently viewed companies (last 10)")
+async def recent_views(user: User = Depends(get_current_user)):
+    lst = _recent(user.id)[:10]
+    companies = []
+    for cid in lst:
+        c = _ID_INDEX.get(cid)
+        if c:
+            cts = [_build_contact(ct, c) for ct in c["contacts"]]
+            companies.append(_build_company_row(c, cts))
+    return {"success": True, "count": len(companies), "companies": companies}
+
+@discovery.post("/viewed/{company_id}", summary="Track company view (for Recent)")
+async def track_view(company_id: str, user: User = Depends(get_current_user)):
+    if company_id not in _ID_INDEX:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Company not found")
+    _record_view(user.id, company_id)
+    return {"success": True}
+
+# ─── 11. Saved Searches ───────────────────────────────────────────
+@discovery.get("/saved-searches", summary="Get user's saved filter configurations")
+async def get_saved_searches(user: User = Depends(get_current_user)):
+    return {"success": True, "searches": _ss(user.id)}
+
+@discovery.post("/saved-searches", summary="Save current filter configuration")
+async def save_search(req: SavedSearchCreate, user: User = Depends(get_current_user)):
+    searches = _ss(user.id)
+    if len(searches) >= 20:
+        from fastapi import HTTPException
+        raise HTTPException(400, "Max 20 saved searches. Delete some first.")
+    entry = {"id": str(_uuid_mod.uuid4()), "name": req.name, "filters": req.filters,
+             "created_at": datetime.utcnow().isoformat()}
+    searches.insert(0, entry)
+    return {"success": True, "search": entry, "total": len(searches)}
+
+@discovery.delete("/saved-searches/{search_id}", summary="Delete a saved search")
+async def delete_saved_search(search_id: str, user: User = Depends(get_current_user)):
+    searches = _ss(user.id)
+    before = len(searches)
+    _SAVED_SEARCHES[str(user.id)] = [s for s in searches if s["id"] != search_id]
+    return {"success": True, "deleted": before - len(_SAVED_SEARCHES[str(user.id)])}
+
+# ─── 12. Industry Benchmarks ──────────────────────────────────────
+@discovery.get("/benchmark/{industry}", summary="Industry benchmarks: avg score, top signals, hot lead %")
+async def industry_benchmark(industry: str, user: User = Depends(get_current_user)):
+    comps = [c for c in GLOBAL_DB if c["industry"].lower() == industry.lower()]
+    if not comps:
+        from fastapi import HTTPException
+        raise HTTPException(404, f"No companies found for industry: {industry}")
+
+    all_contacts = []
+    for comp in comps:
+        for c in comp["contacts"]:
+            sc = compute_score(c, comp)
+            all_contacts.append(sc)
+
+    signal_counts: dict = {}
+    for comp in comps:
+        for s in comp.get("intent",[]): signal_counts[s] = signal_counts.get(s,0)+1
+
+    scores = all_contacts
+    hot_pct = round(100 * sum(1 for s in scores if s>=80) / len(scores), 1) if scores else 0
+    countries_rep = {}
+    for comp in comps: countries_rep[comp["country"]] = countries_rep.get(comp["country"],0)+1
+
+    return {
+        "success": True,
+        "industry": industry,
+        "companies": len(comps),
+        "total_contacts": len(scores),
+        "avg_score": round(sum(scores)/len(scores),1) if scores else 0,
+        "max_score": max(scores) if scores else 0,
+        "hot_lead_pct": hot_pct,
+        "top_signals": sorted(signal_counts.items(), key=lambda x: x[1], reverse=True)[:6],
+        "top_countries": sorted(countries_rep.items(), key=lambda x: x[1], reverse=True)[:5],
+        "avg_potential_inr": round(
+            sum(get_potential_inr(c["country"],s) for c in comps for s in [compute_score(ct,c) for ct in c["contacts"]]) / max(len(scores),1)
+        ),
+    }
+
+# ─── 13. Countries ────────────────────────────────────────────────
+@discovery.get("/countries", summary="All supported countries with metadata")
 async def list_countries(user: User = Depends(get_current_user)):
-    """All supported countries with metadata"""
     data = []
     for cc, meta in COUNTRIES.items():
-        count = sum(1 for c in GLOBAL_DB if c["country"] == cc)
+        comps = [c for c in GLOBAL_DB if c["country"] == cc]
+        hot = sum(1 for comp in comps for c in comp["contacts"] if compute_score(c,comp)>=80)
         data.append({
             "code": cc, "name": meta["name"], "flag": meta["flag"],
             "compliance": meta["compliance"], "risk": meta["risk"],
-            "business_culture": meta["business"],
-            "company_count": count,
+            "business_culture": meta["business"], "timezone": meta.get("tz",""),
+            "currency": meta.get("currency","USD"),
+            "company_count": len(comps),
+            "hot_leads": hot,
         })
     data.sort(key=lambda x: x["company_count"], reverse=True)
-    return {"success": True, "total": len(data), "countries": data}
+    return {"success": True, "total": len(data), "countries": [d for d in data if d["company_count"] > 0]}
 
-
-@discovery.get("/intent-signals")
+# ─── 14. Intent Signals ───────────────────────────────────────────
+@discovery.get("/intent-signals", summary="All intent signals with metadata and company counts")
 async def list_intent_signals(user: User = Depends(get_current_user)):
-    """All available intent signals with company counts"""
-    signal_counts = {}
+    signal_counts: dict = {}
     for comp in GLOBAL_DB:
-        for sig in comp.get("intent", []):
-            signal_counts[sig] = signal_counts.get(sig, 0) + 1
-    signals = [
-        {"signal": k, "label": k.replace("_"," ").title(), "company_count": v}
-        for k, v in sorted(signal_counts.items(), key=lambda x: x[1], reverse=True)
-    ]
-    return {"success": True, "signals": signals}
+        for sig in comp.get("intent",[]): signal_counts[sig] = signal_counts.get(sig,0)+1
+    signals = []
+    for k, v in sorted(signal_counts.items(), key=lambda x: x[1], reverse=True):
+        meta = SIGNAL_META.get(k, {})
+        signals.append({
+            "signal": k, "label": meta.get("label", k.replace("_"," ").title()),
+            "company_count": v, "urgency": meta.get("urgency",1),
+            "buying_window_days": meta.get("window",365),
+            "description": SIGNAL_EXPLAIN.get(k,""),
+        })
+    return {"success": True, "total": len(signals), "signals": signals}
 
-
-@discovery.get("/stats")
+# ─── 15. Discovery Stats ──────────────────────────────────────────
+@discovery.get("/stats", summary="Global database stats and health check")
 async def discovery_stats(user: User = Depends(get_current_user)):
-    """Global discovery database stats"""
     total_contacts = sum(len(c["contacts"]) for c in GLOBAL_DB)
-    industries = {}
-    countries = {}
+    industries, countries = {}, {}
+    hot_total = 0
     for comp in GLOBAL_DB:
-        industries[comp["industry"]] = industries.get(comp["industry"], 0) + 1
-        countries[comp["country"]] = countries.get(comp["country"], 0) + 1
-
+        industries[comp["industry"]] = industries.get(comp["industry"],0)+1
+        countries[comp["country"]] = countries.get(comp["country"],0)+1
+        for c in comp["contacts"]:
+            if compute_score(c, comp) >= 80: hot_total += 1
     return {
         "success": True,
         "total_companies": len(GLOBAL_DB),
         "total_contacts": total_contacts,
         "total_countries": len(countries),
         "total_industries": len(industries),
+        "total_hot_leads": hot_total,
+        "intent_signals": len(INTENT_SIGNALS),
         "by_industry": dict(sorted(industries.items(), key=lambda x: x[1], reverse=True)),
         "top_countries": dict(sorted(countries.items(), key=lambda x: x[1], reverse=True)[:15]),
-        "intent_signals": len(INTENT_SIGNALS),
-        "database_coverage": f"{len(GLOBAL_DB)} companies · {total_contacts} contacts · {len(countries)} countries",
+        "database_coverage": f"{len(GLOBAL_DB)} companies · {total_contacts} contacts · {len(countries)} countries · {len(industries)} industries",
+        "endpoints": 20,
+        "version": "4.0.0",
     }
 
-
-@discovery.get("/company/{company_id}")
-async def get_company_detail(company_id: str, user: User = Depends(get_current_user)):
-    """Full company profile with all contacts (masked) + intelligence"""
-    comp = next((c for c in GLOBAL_DB if c["id"] == company_id), None)
-    if not comp:
-        from fastapi import HTTPException
-        raise HTTPException(404, "Company not found")
-    country_meta = COUNTRIES.get(comp["country"], {})
-    contacts = []
-    for c in comp["contacts"]:
-        sc = compute_score(c, comp)
-        contacts.append({
-            "name": c["first"] + " " + c["last"],
-            "title": c["title"], "dept": c["dept"], "seniority": c["seniority"],
-            "email_masked": mask_email(c["first"].lower() + "." + c["last"].lower() + "@" + comp["domain"]),
-            "score": sc, "score_label": "HOT" if sc >= 80 else "WARM" if sc >= 60 else "COLD",
-            "potential_inr": get_potential_inr(comp["country"], sc),
-        })
-    contacts.sort(key=lambda x: x["score"], reverse=True)
-    SIGNAL_EXPLAIN = {
-        "hiring_engineers": "Actively scaling engineering team — high tech budget",
-        "series_a_funded": "Fresh Series A capital — actively deploying on tools",
-        "series_b_funded": "Series B funded — scaling operations and software",
-        "expanding_globally": "Entering new markets — needs global-ready solutions",
-        "new_product_launch": "Launching new product — buying cycle is active",
-        "recent_ipo": "Post-IPO — increased scrutiny, needs enterprise tools",
-        "acquisitions": "M&A activity — integration projects create budget",
-        "tech_refresh": "Replacing legacy systems — open to new vendors",
-        "hiring_sales": "Growing sales team — CRM and enablement tools needed",
-        "entering_new_market": "New market entry — compliance and local tools needed",
-        "ciso_hired": "New CISO onboard — security stack review in progress",
-        "digital_transformation": "Digital transformation initiative — large budgets",
-        "cloud_migration": "Moving to cloud — platform and security decisions pending",
-        "compliance_audit": "Compliance audit — GRC and legal tools in demand",
-        "recent_rebrand": "Rebranding — updating all vendor relationships",
-    }
-    return {
-        "success": True,
-        "company": {**comp, "contacts": contacts,
-            "country_meta": country_meta,
-            "total_potential_inr": sum(c["potential_inr"] for c in contacts),
-            "intelligence": {
-                "why_now": [i.replace("_"," ").title() for i in comp.get("intent",[])],
-                "why_now_detail": [{"signal": i, "label": i.replace("_"," ").title(), "reason": SIGNAL_EXPLAIN.get(i,"")} for i in comp.get("intent",[])],
-                "pitch_angle": f"With {comp.get('growth','')} growth and {comp.get('funding','')}, {comp['company']} is scaling fast. Target decision-makers during this window.",
-                "tech_overlap": comp.get("tech", []),
-                "outreach_tip": country_meta.get("business","Direct, professional communication recommended."),
-                "compliance_note": country_meta.get("compliance","Ensure data compliance before outreach."),
-            }
-        }
-    }
-
-
-@discovery.get("/export-csv")
-async def export_discovery_csv(
-    industry: str = None, country: str = None, intent: str = None,
-    seniority: str = None, min_score: int = 0,
-    user: User = Depends(get_current_user),
-):
-    """Export filtered discovery results as CSV"""
-    import io, csv
-    from fastapi.responses import StreamingResponse
-    intent_filters = [i.strip() for i in intent.split(",")] if intent else []
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Company","Domain","Industry","Country","City","Funding","Growth","Revenue","Contact Name","Title","Department","Seniority","Email (masked)","Score","Score Label","Potential INR","Tech Stack","Intent Signals"])
-    for comp in GLOBAL_DB:
-        if industry and comp["industry"] != industry.lower(): continue
-        if country and comp["country"].upper() != country.upper(): continue
-        if intent_filters and not any(i in comp.get("intent",[]) for i in intent_filters): continue
-        for c in comp["contacts"]:
-            if seniority and c.get("seniority","") != seniority: continue
-            sc = compute_score(c, comp, intent_filters)
-            if sc < min_score: continue
-            writer.writerow([
-                comp["company"], comp["domain"], comp["industry"], comp["country"], comp["city"],
-                comp.get("funding",""), comp.get("growth",""), comp.get("rev",""),
-                c["first"]+" "+c["last"], c["title"], c["dept"], c["seniority"],
-                mask_email(c["first"].lower()+"."+c["last"].lower()+"@"+comp["domain"]),
-                sc, "HOT" if sc>=80 else "WARM" if sc>=60 else "COLD",
-                get_potential_inr(comp["country"], sc),
-                "|".join(comp.get("tech",[])), "|".join(comp.get("intent",[]))
-            ])
-    output.seek(0)
-    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=nanoneuron_leads.csv"})
-
-
-@discovery.get("/market-map")
+# ─── 16. Market Map ───────────────────────────────────────────────
+@discovery.get("/market-map", summary="Country × Industry heat map")
 async def market_map(user: User = Depends(get_current_user)):
-    """Country × Industry heat map for the world map view"""
-    data = {}
+    data: dict = {}
     for comp in GLOBAL_DB:
         cc = comp["country"]
         ind = comp["industry"]
         if cc not in data:
             data[cc] = {"country": cc, "total": 0, "by_industry": {}, "hot_leads": 0,
-                        "meta": COUNTRIES.get(cc,{})}
+                        "total_contacts": 0, "meta": COUNTRIES.get(cc,{})}
         data[cc]["total"] += 1
-        data[cc]["by_industry"][ind] = data[cc]["by_industry"].get(ind, 0) + 1
+        data[cc]["by_industry"][ind] = data[cc]["by_industry"].get(ind,0)+1
         for c in comp["contacts"]:
             sc = compute_score(c, comp)
+            data[cc]["total_contacts"] += 1
             if sc >= 80: data[cc]["hot_leads"] += 1
     result = sorted(data.values(), key=lambda x: x["total"], reverse=True)
     return {"success": True, "countries": result, "total_companies": len(GLOBAL_DB)}
+
+# ─── 17. Export CSV ───────────────────────────────────────────────
+@discovery.get("/export-csv", summary="Export filtered results as CSV")
+async def export_discovery_csv(
+    industry: str = None, country: str = None, intent: str = None,
+    seniority: str = None, min_score: int = 0, tech: str = None, q: str = None,
+    user: User = Depends(get_current_user),
+):
+    import io, csv
+    from fastapi.responses import StreamingResponse
+    results = _apply_filters(industry, country, intent, seniority, None, min_score, None, tech, q)
+    results.sort(key=lambda x: x["top_score"], reverse=True)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Company","Domain","Industry","Country","City","Revenue","Funding","Growth","Employees",
+        "Contact Name","Title","Department","Seniority","Email (masked)","Score","Score Label",
+        "Urgency","Buying Window Days","Potential INR","Tech Stack","Intent Signals"
+    ])
+    for r in results:
+        for c in r["contacts"]:
+            writer.writerow([
+                r["company"], r["domain"], r["industry"], r["country"], r["city"],
+                r["revenue"], r["funding"], r["growth"], r["employees"],
+                c["name"], c["title"], c["dept"], c["seniority"], c["email_masked"],
+                c["score"], c["score_label"], c.get("urgency",1), c.get("buying_window_days",365),
+                c["potential_inr"], "|".join(r["tech"]), "|".join(r["intent"])
+            ])
+    output.seek(0)
+    from datetime import datetime as _dt
+    filename = f"nanoneuron_leads_{_dt.utcnow().strftime('%Y%m%d_%H%M')}.csv"
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+# ─── 18. Export JSON ──────────────────────────────────────────────
+@discovery.post("/export-json", summary="Export filtered results as JSON (richer than CSV)")
+async def export_discovery_json(
+    industry: str = None, country: str = None, intent: str = None,
+    seniority: str = None, min_score: int = 0,
+    user: User = Depends(get_current_user),
+):
+    import json
+    from fastapi.responses import Response
+    results = _apply_filters(industry, country, intent, seniority, None, min_score)
+    results.sort(key=lambda x: x["top_score"], reverse=True)
+    payload = {"exported_at": datetime.utcnow().isoformat(), "total": len(results), "data": results}
+    return Response(content=json.dumps(payload, indent=2), media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=nanoneuron_leads.json"})
+
+# ─── 19. Bulk Pipeline ────────────────────────────────────────────
+@discovery.post("/bulk-pipeline", summary="Add primary contacts of multiple companies to pipeline at once")
+async def bulk_pipeline(req: BulkPipelineRequest, user: User = Depends(get_current_user)):
+    added, errors = [], []
+    for cid in req.company_ids[:50]:  # hard cap at 50
+        comp = _ID_INDEX.get(cid)
+        if not comp or not comp.get("contacts"):
+            errors.append(cid); continue
+        primary = comp["contacts"][0]
+        sc = compute_score(primary, comp)
+        added.append({
+            "company": comp["company"], "company_id": cid,
+            "contact": primary["first"]+" "+primary["last"],
+            "title": primary["title"], "score": sc,
+            "email_masked": mask_email(primary["first"].lower()+"."+primary["last"].lower()+"@"+comp["domain"]),
+        })
+    return {"success": True, "added": len(added), "errors": len(errors), "leads": added}
+
+# ─── 20. Tech Stack Analysis ─────────────────────────────────────
+@discovery.get("/tech-stacks", summary="Most common tech stacks with company counts")
+async def tech_stack_analysis(user: User = Depends(get_current_user)):
+    counts: dict = {}
+    for comp in GLOBAL_DB:
+        for t in comp.get("tech",[]): counts[t] = counts.get(t,0)+1
+    top = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    return {
+        "success": True,
+        "total_unique_techs": len(counts),
+        "stacks": [{"tech": k, "company_count": v} for k,v in top[:40]],
+    }
