@@ -1,15 +1,15 @@
 /**
  * Nanoneuron CRM — API client
- * In production: NEXT_PUBLIC_API_URL = https://api.nanoneuron.ai
+ * In production: NEXT_PUBLIC_API_URL = https://nanoneuron-api-production-287b.up.railway.app
  * In development: falls back to http://localhost:8000
  */
-// In production: same-domain /api/* is routed to Railway by Cloudflare Worker
-// In development: calls localhost:8000 directly
+const RAILWAY_URL = "https://nanoneuron-api-production-287b.up.railway.app";
+
 export const API_BASE =
   typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL
     : typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? ""
+    ? RAILWAY_URL
     : "http://localhost:8000";
 
 export function apiFetch(path, opts = {}) {
